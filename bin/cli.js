@@ -332,6 +332,7 @@ if (selectedTargets.length > 0) {
       { title: '>> Smart Install (Auto-detect tools & install)', value: 'smart', description: 'Automatically detects which AI tools you have and configures them' },
       { title: '-> Local Project (Specific tools for this folder)', value: 'local', description: 'Manually select local project tools to configure' },
       { title: '=> Global User (Specific tools globally)', value: 'global', description: 'Manually select global tools to configure' },
+      { title: '== Manual Selection (Show ALL tools)', value: 'all', description: 'Manually select from the full list of both local and global tools' },
       { title: ' x Cancel', value: 'cancel' }
     ]
   });
@@ -359,9 +360,13 @@ if (selectedTargets.length > 0) {
     keysToInstall = availableKeys;
 
   } else {
-    // Manual Selection (Local or Global)
+    // Manual Selection (Local, Global, or All)
     const isGlobal = modeResponse.mode === 'global';
-    const filteredKeys = keys.filter(k => isGlobal ? k.endsWith('Global') : !k.endsWith('Global'));
+    const isLocal = modeResponse.mode === 'local';
+    
+    let filteredKeys = keys;
+    if (isGlobal) filteredKeys = keys.filter(k => k.endsWith('Global'));
+    if (isLocal) filteredKeys = keys.filter(k => !k.endsWith('Global'));
     
     const choices = filteredKeys.map(key => ({
       title: targets[key].name,
@@ -369,8 +374,12 @@ if (selectedTargets.length > 0) {
       value: key
     }));
     
+    let allMacroTitle = 'ALL';
+    if (isGlobal) allMacroTitle = 'GLOBAL';
+    if (isLocal) allMacroTitle = 'LOCAL';
+
     choices.unshift({ 
-      title: `\x1b[33m--- Select All ${isGlobal ? 'GLOBAL' : 'LOCAL'} Tools ---\x1b[0m`, 
+      title: `\x1b[33m--- Select All ${allMacroTitle} Tools ---\x1b[0m`, 
       value: 'ALL', 
       description: `Selects all options below` 
     });
