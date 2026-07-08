@@ -10,7 +10,7 @@ Write-Host "========================================================" -Foregroun
 if (Get-Command node -ErrorAction SilentlyContinue) {
     Write-Host "Node.js detected. Launching NPM-based CLI installer..." -ForegroundColor Green
     & npx roblox-best-practices-skill $args
-    Exit
+    return
 }
 
 Write-Host "Node.js/NPM not found. Running PowerShell fallback installer..." -ForegroundColor Yellow
@@ -91,7 +91,7 @@ try {
 
     if ($choice -eq "C" -or $choice -eq "") {
         Write-Host "Installation cancelled." -ForegroundColor Yellow
-        exit
+        return
     }
     
     $opts = @()
