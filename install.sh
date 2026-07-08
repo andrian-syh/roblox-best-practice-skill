@@ -16,7 +16,7 @@ echo "${BLUE}========================================================${NC}"
 # Check if Node.js/npm is available
 if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
   echo "Node.js detected. Launching NPM-based CLI installer..."
-  npx roblox-best-practices-skill "$@"
+  npx github:andrian-syh/roblox-best-practice-skill "$@"
   exit 0
 fi
 

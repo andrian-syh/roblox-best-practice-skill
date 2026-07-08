@@ -9,7 +9,7 @@ Write-Host "========================================================" -Foregroun
 # Check if Node.js and npm are available
 if (Get-Command node -ErrorAction SilentlyContinue) {
     Write-Host "Node.js detected. Launching NPM-based CLI installer..." -ForegroundColor Green
-    & npx roblox-best-practices-skill $args
+    & npx github:andrian-syh/roblox-best-practice-skill $args
     return
 }
 

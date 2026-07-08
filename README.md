@@ -30,21 +30,21 @@ You can install this skill globally or locally for your project using one of the
 Run the interactive installer directly in your terminal:
 
 ```bash
-npx roblox-best-practices-skill
+npx github:andrian-syh/roblox-best-practice-skill
 ```
 
 #### CLI Flags (Non-Interactive)
 
 You can pass flags to automate the installation:
 
-- **All Local Tools**: `npx roblox-best-practices-skill --all-local` (or `-al`)
-- **All Global Configs**: `npx roblox-best-practices-skill --all-global` (or `-ag`)
-- **All Supported Tools**: `npx roblox-best-practices-skill --all` (or `-a`)
+- **All Local Tools**: `npx github:andrian-syh/roblox-best-practice-skill --all-local` (or `-al`)
+- **All Global Configs**: `npx github:andrian-syh/roblox-best-practice-skill --all-global` (or `-ag`)
+- **All Supported Tools**: `npx github:andrian-syh/roblox-best-practice-skill --all` (or `-a`)
 - **Specific Tools**:
-  - `npx roblox-best-practices-skill --cursor` (Cursor)
-  - `npx roblox-best-practices-skill --claude-local` (Claude Code local)
-  - `npx roblox-best-practices-skill --copilot` (GitHub Copilot)
-  - *(Run `npx roblox-best-practices-skill --help` to see all specific flags)*
+  - `npx github:andrian-syh/roblox-best-practice-skill --cursor` (Cursor)
+  - `npx github:andrian-syh/roblox-best-practice-skill --claude-local` (Claude Code local)
+  - `npx github:andrian-syh/roblox-best-practice-skill --copilot` (GitHub Copilot)
+  - *(Run `npx github:andrian-syh/roblox-best-practice-skill --help` to see all specific flags)*
 
 ---
 
