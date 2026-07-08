@@ -1,0 +1,41 @@
+{
+  "name": "roblox-best-practices-skill",
+  "version": "1.0.0",
+  "description": "Framework-agnostic Roblox/Luau coding standards and best practices installer for various AI agents.",
+  "main": "bin/cli.js",
+  "bin": {
+    "roblox-best-practices-skill": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "roblox-best-practices",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrian-syh/roblox-best-practice-skill.git"
+  },
+  "keywords": [
+    "roblox",
+    "luau",
+    "gemini",
+    "claude",
+    "cursor",
+    "copilot",
+    "windsurf",
+    "aider",
+    "openclaude",
+    "opencode",
+    "kilo"
+  ],
+  "author": "andrian-syh",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/andrian-syh/roblox-best-practice-skill/issues"
+  },
+  "homepage": "https://github.com/andrian-syh/roblox-best-practice-skill#readme"
+}
