@@ -4,20 +4,25 @@ A framework-agnostic coding standards and best practices skill for Roblox and Lu
 
 ---
 
-## Supported AI Tools & Agents (Alphabetical)
+## Supported AI Tools & Agents (by Popularity)
 
 This repository includes a multi-agent installer that automatically configures this skill for your preferred AI editor, CLI, or extension:
 
-- **Aider**: Project-level instructions via `.aider.instructions.md`.
-- **Antigravity / Gemini Agent IDE**: Global (`~/.gemini/config/skills/`) and local (`./.agents/skills/`) configuration.
-- **Claude Code CLI**: Global (`~/.claude/skills/`) and local (`./.claude/skills/`) skill placement.
-- **Cline / Roo Code**: Local rules using `.clinerules` and `.roorules` in the project root.
-- **Cursor**: Local Markdown Cursor rules (`.cursor/rules/*.mdc`) with YAML frontmatter and globs setup.
-- **GitHub Copilot**: Project-level instructions via `.github/copilot-instructions.md`.
-- **Kilo Code**: Global rules via `~/.config/kilo/AGENTS.md` and local rules via `./.kilocode/rules/`.
-- **OpenClaude**: Global (`~/.openclaude/skills/`) and local (`./.openclaude/skills/`) skills.
-- **OpenCode**: Global (`~/.config/opencode/skills/`) and local (`./.opencode/skills/`) skills.
-- **Windsurf**: Local Cascade rules via `./.windsurf/rules/` and `./.windsurfrules`.
+- **Claude Code**: Global (`~/.claude/skills/`) and local (`.claude/skills/`) skill configuration.
+- **Codex CLI**: Global (`~/.codex/skills/`) and local (`.codex/skills/`) skill configuration.
+- **Gemini CLI**: Global (`~/.gemini/skills/`) and local (`.gemini/skills/`) skill configuration.
+- **Antigravity / Gemini Agent IDE**: Global (`~/.gemini/config/skills/`) and local (`.agents/skills/`) skill configuration.
+- **Cursor**: Global (`~/.cursor/skills/`) and local (`.cursor/skills/`) skill configuration.
+- **Windsurf / Devin Desktop**: Global (`~/.codeium/windsurf/skills/`) and local (`.windsurf/skills/`) skill configuration.
+- **Cline**: Global (`~/.cline/skills/`) and local (`.cline/skills/`) skill configuration.
+- **Roo Code**: Global (`~/.roo/skills/`) and local (`.roo/skills/`) skill configuration.
+- **Kilo Code**: Global (`~/.kilo/skills/`) and local (`.kilo/skills/`) skill configuration.
+- **Trae AI**: Global (`~/.trae/skills/`) and local (`.trae/skills/`) skill configuration.
+- **Augment Code**: Local skill via `.augment/skills/` (also reads `.agents/skills/`).
+- **Zed Editor**: Local skill via `.zed/skills/`, or via Zed's built-in Skills Manager.
+- **Amazon Q Developer**: Local skill via `.amazonq/skills/`.
+- **OpenCode**: Global (`~/.config/opencode/skills/`) and local (`.opencode/skills/`) skill configuration.
+- **OpenClaude**: Global (`~/.openclaude/skills/`) and local (`.openclaude/skills/`) skill configuration.
 
 ---
 
@@ -41,9 +46,9 @@ You can pass flags to automate the installation:
 - **All Global Configs**: `npx github:andrian-syh/roblox-best-practice-skill --all-global` (or `-ag`)
 - **All Supported Tools**: `npx github:andrian-syh/roblox-best-practice-skill --all` (or `-a`)
 - **Specific Tools**:
-  - `npx github:andrian-syh/roblox-best-practice-skill --cursor` (Cursor)
   - `npx github:andrian-syh/roblox-best-practice-skill --claude-local` (Claude Code local)
-  - `npx github:andrian-syh/roblox-best-practice-skill --copilot` (GitHub Copilot)
+  - `npx github:andrian-syh/roblox-best-practice-skill --cursor` (Cursor)
+  - `npx github:andrian-syh/roblox-best-practice-skill --codex-local` (Codex CLI local)
   - *(Run `npx github:andrian-syh/roblox-best-practice-skill --help` to see all specific flags)*
 
 ---

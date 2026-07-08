@@ -7,6 +7,7 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+YELLOW='\033[0;33m'
 NC='\033[0;0m' # No Color
 
 echo "${BLUE}========================================================${NC}"
@@ -47,7 +48,6 @@ else
   
   if command -v unzip >/dev/null 2>&1; then
     unzip -q "$TEMP_DIR/archive.zip" -d "$TEMP_DIR"
-    # Move extracted files to temp root
     mv "$TEMP_DIR"/roblox-best-practice-skill-main/* "$TEMP_DIR"/ || true
   else
     echo "${RED}[ERROR] 'unzip' utility not found. Please install unzip or Node.js to continue.${NC}"
@@ -72,30 +72,42 @@ copy_folder() {
   echo "${GREEN}[CREATED] $dest${NC}"
 }
 
-copy_file() {
-  local src="$1"
-  local dest="$2"
-  mkdir -p "$(dirname "$dest")"
-  cp "$src" "$dest"
-  echo "${GREEN}[CREATED] $dest${NC}"
-}
-
 install_targets() {
   echo ""
   echo "Where would you like to install the skill?"
-  echo "1) Antigravity / Gemini Agent IDE (Global) -> ~/.gemini/config/skills/"
-  echo "2) Antigravity / Gemini Agent IDE (Local)  -> ./.agents/skills/"
-  echo "3) Claude Code CLI (Global)                -> ~/.claude/skills/"
-  echo "4) Claude Code CLI (Local)                 -> ./.claude/skills/"
-  echo "5) Cursor (Local)                          -> ./.cursor/rules/"
-  echo "6) Windsurf (Local)                        -> ./.windsurf/rules/"
-  echo "7) Cline / Roo Code (Local)                -> .clinerules & .roorules"
-  echo "8) GitHub Copilot (Local)                  -> .github/copilot-instructions.md"
-  echo "A) All Local targets"
-  echo "B) All Global targets"
-  echo "C) Cancel"
+  echo " 1) Claude Code (Global)                      -> ~/.claude/skills/"
+  echo " 2) Claude Code (Local)                       -> ./.claude/skills/"
+  echo " 3) Codex CLI (Global)                        -> ~/.codex/skills/"
+  echo " 4) Codex CLI (Local)                         -> ./.codex/skills/"
+  echo " 5) Gemini CLI (Global)                       -> ~/.gemini/skills/"
+  echo " 6) Gemini CLI (Local)                        -> ./.gemini/skills/"
+  echo " 7) Antigravity / Gemini Agent IDE (Global)   -> ~/.gemini/config/skills/"
+  echo " 8) Antigravity / Gemini Agent IDE (Local)    -> ./.agents/skills/"
+  echo " 9) Cursor (Global)                           -> ~/.cursor/skills/"
+  echo "10) Cursor (Local)                            -> ./.cursor/skills/"
+  echo "11) Windsurf / Devin Desktop (Global)         -> ~/.codeium/windsurf/skills/"
+  echo "12) Windsurf / Devin Desktop (Local)          -> ./.windsurf/skills/"
+  echo "13) Cline (Global)                            -> ~/.cline/skills/"
+  echo "14) Cline (Local)                             -> ./.cline/skills/"
+  echo "15) Roo Code (Global)                         -> ~/.roo/skills/"
+  echo "16) Roo Code (Local)                          -> ./.roo/skills/"
+  echo "17) Kilo Code (Global)                        -> ~/.kilo/skills/"
+  echo "18) Kilo Code (Local)                         -> ./.kilo/skills/"
+  echo "19) Trae AI (Global)                          -> ~/.trae/skills/"
+  echo "20) Trae AI (Local)                           -> ./.trae/skills/"
+  echo "21) Augment Code (Local)                      -> ./.augment/skills/"
+  echo "22) Zed Editor (Local)                        -> ./.zed/skills/"
+  echo "23) Amazon Q Developer (Local)                -> ./.amazonq/skills/"
+  echo "24) OpenCode (Global)                         -> ~/.config/opencode/skills/"
+  echo "25) OpenCode (Local)                          -> ./.opencode/skills/"
+  echo "26) OpenClaude (Global)                       -> ~/.openclaude/skills/"
+  echo "27) OpenClaude (Local)                        -> ./.openclaude/skills/"
+  echo " L) All LOCAL targets"
+  echo " G) All GLOBAL targets"
+  echo " A) ALL targets"
+  echo " C) Cancel"
   
-  printf "Select option(s) (space-separated, e.g. 1 3 5 or A/B/C): "
+  printf "Select option(s) (space-separated, e.g. 1 3 5 or A/G/L/C): "
   read -r CHOICE
   
   # Normalize to uppercase
@@ -107,54 +119,46 @@ install_targets() {
       exit 0
       ;;
     A)
-      CHOICE="2 4 5 6 7 8"
+      CHOICE="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27"
       ;;
-    B)
-      CHOICE="1 3"
+    L)
+      CHOICE="2 4 6 8 10 12 14 16 18 20 21 22 23 25 27"
+      ;;
+    G)
+      CHOICE="1 3 5 7 9 11 13 15 17 19 24 26"
       ;;
   esac
   
   for opt in $CHOICE; do
     case "$opt" in
-      1)
-        copy_folder "$SRC_SKILL_DIR" "$HOME/.gemini/config/skills/roblox-best-practices"
-        ;;
-      2)
-        copy_folder "$SRC_SKILL_DIR" "./.agents/skills/roblox-best-practices"
-        ;;
-      3)
-        copy_folder "$SRC_SKILL_DIR" "$HOME/.claude/skills/roblox-best-practices"
-        ;;
-      4)
-        copy_folder "$SRC_SKILL_DIR" "./.claude/skills/roblox-best-practices"
-        ;;
-      5)
-        # Cursor needs custom mdc file formatting
-        MDC_FILE="./.cursor/rules/roblox-best-practices.mdc"
-        mkdir -p ./.cursor/rules
-        printf -- "---\ndescription: Framework-agnostic Roblox/Luau coding standards and best practices\nglobs: [\"**/*.lua\", \"**/*.luau\"]\nalwaysApply: true\n---\n\n" > "$MDC_FILE"
-        cat "$SRC_SKILL_DIR/SKILL.md" >> "$MDC_FILE"
-        echo "${GREEN}[CREATED] $MDC_FILE${NC}"
-        copy_folder "$SRC_SKILL_DIR/references" "./.cursor/rules/references"
-        ;;
-      6)
-        copy_file "$SRC_SKILL_DIR/SKILL.md" "./.windsurf/rules/roblox-best-practices.md"
-        copy_folder "$SRC_SKILL_DIR/references" "./.windsurf/rules/references"
-        copy_file "$SRC_SKILL_DIR/SKILL.md" "./.windsurfrules"
-        copy_folder "$SRC_SKILL_DIR/references" "./references"
-        ;;
-      7)
-        copy_file "$SRC_SKILL_DIR/SKILL.md" "./.clinerules"
-        copy_file "$SRC_SKILL_DIR/SKILL.md" "./.roorules"
-        copy_folder "$SRC_SKILL_DIR/references" "./references"
-        ;;
-      8)
-        copy_file "$SRC_SKILL_DIR/SKILL.md" "./.github/copilot-instructions.md"
-        copy_folder "$SRC_SKILL_DIR/references" "./.github/references"
-        ;;
-      *)
-        echo "${RED}Invalid option: $opt${NC}"
-        ;;
+      1)  copy_folder "$SRC_SKILL_DIR" "$HOME/.claude/skills/roblox-best-practices" ;;
+      2)  copy_folder "$SRC_SKILL_DIR" "./.claude/skills/roblox-best-practices" ;;
+      3)  copy_folder "$SRC_SKILL_DIR" "$HOME/.codex/skills/roblox-best-practices" ;;
+      4)  copy_folder "$SRC_SKILL_DIR" "./.codex/skills/roblox-best-practices" ;;
+      5)  copy_folder "$SRC_SKILL_DIR" "$HOME/.gemini/skills/roblox-best-practices" ;;
+      6)  copy_folder "$SRC_SKILL_DIR" "./.gemini/skills/roblox-best-practices" ;;
+      7)  copy_folder "$SRC_SKILL_DIR" "$HOME/.gemini/config/skills/roblox-best-practices" ;;
+      8)  copy_folder "$SRC_SKILL_DIR" "./.agents/skills/roblox-best-practices" ;;
+      9)  copy_folder "$SRC_SKILL_DIR" "$HOME/.cursor/skills/roblox-best-practices" ;;
+      10) copy_folder "$SRC_SKILL_DIR" "./.cursor/skills/roblox-best-practices" ;;
+      11) copy_folder "$SRC_SKILL_DIR" "$HOME/.codeium/windsurf/skills/roblox-best-practices" ;;
+      12) copy_folder "$SRC_SKILL_DIR" "./.windsurf/skills/roblox-best-practices" ;;
+      13) copy_folder "$SRC_SKILL_DIR" "$HOME/.cline/skills/roblox-best-practices" ;;
+      14) copy_folder "$SRC_SKILL_DIR" "./.cline/skills/roblox-best-practices" ;;
+      15) copy_folder "$SRC_SKILL_DIR" "$HOME/.roo/skills/roblox-best-practices" ;;
+      16) copy_folder "$SRC_SKILL_DIR" "./.roo/skills/roblox-best-practices" ;;
+      17) copy_folder "$SRC_SKILL_DIR" "$HOME/.kilo/skills/roblox-best-practices" ;;
+      18) copy_folder "$SRC_SKILL_DIR" "./.kilo/skills/roblox-best-practices" ;;
+      19) copy_folder "$SRC_SKILL_DIR" "$HOME/.trae/skills/roblox-best-practices" ;;
+      20) copy_folder "$SRC_SKILL_DIR" "./.trae/skills/roblox-best-practices" ;;
+      21) copy_folder "$SRC_SKILL_DIR" "./.augment/skills/roblox-best-practices" ;;
+      22) copy_folder "$SRC_SKILL_DIR" "./.zed/skills/roblox-best-practices" ;;
+      23) copy_folder "$SRC_SKILL_DIR" "./.amazonq/skills/roblox-best-practices" ;;
+      24) copy_folder "$SRC_SKILL_DIR" "$HOME/.config/opencode/skills/roblox-best-practices" ;;
+      25) copy_folder "$SRC_SKILL_DIR" "./.opencode/skills/roblox-best-practices" ;;
+      26) copy_folder "$SRC_SKILL_DIR" "$HOME/.openclaude/skills/roblox-best-practices" ;;
+      27) copy_folder "$SRC_SKILL_DIR" "./.openclaude/skills/roblox-best-practices" ;;
+      *)  echo "${RED}Invalid option: $opt${NC}" ;;
     esac
   done
   

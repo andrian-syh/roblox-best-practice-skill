@@ -1,179 +1,147 @@
-# Roblox Best Practices Skill Installer for Windows PowerShell
+# ========================================================
+#  Roblox Best Practices Skill Installer (PowerShell)
+# ========================================================
 
-$ErrorActionPreference = "Stop"
+Write-Host "========================================================" -ForegroundColor Blue
+Write-Host "       Roblox Best Practices Skill Installer            " -ForegroundColor Blue
+Write-Host "========================================================" -ForegroundColor Blue
 
-Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "       Roblox Best Practices Skill Installer            " -ForegroundColor Cyan
-Write-Host "========================================================" -ForegroundColor Cyan
-
-# Check if Node.js and npm are available
-if (Get-Command node -ErrorAction SilentlyContinue) {
-    Write-Host "Node.js detected. Launching NPM-based CLI installer..." -ForegroundColor Green
-    & npx github:andrian-syh/roblox-best-practice-skill $args
-    return
+# Check if Node.js/npm is available, prefer npx-based CLI
+if ((Get-Command node -ErrorAction SilentlyContinue) -and (Get-Command npm -ErrorAction SilentlyContinue)) {
+  Write-Host "Node.js detected. Launching NPM-based CLI installer..."
+  npx github:andrian-syh/roblox-best-practice-skill @args
+  exit
 }
 
 Write-Host "Node.js/NPM not found. Running PowerShell fallback installer..." -ForegroundColor Yellow
 
-# Setup temporary directory
-$tempDirName = "roblox_best_practices_skill_temp"
-$tempPath = Join-Path $env:TEMP $tempDirName
-if (Test-Path $tempPath) {
-    Remove-Item -Recurse -Force $tempPath -ErrorAction SilentlyContinue
-}
-New-Item -ItemType Directory -Path $tempPath | Out-Null
+# Download skill files to temp directory
+$tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("roblox_skill_" + [System.Guid]::NewGuid().ToString().Substring(0,8))
+New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
 
 try {
-    Write-Host "Downloading skill files..." -ForegroundColor Cyan
-    if (Get-Command git -ErrorAction SilentlyContinue) {
-        & git clone --depth 1 https://github.com/andrian-syh/roblox-best-practice-skill.git $tempPath
-    } else {
-        $zipUrl = "https://github.com/andrian-syh/roblox-best-practice-skill/archive/refs/heads/main.zip"
-        $zipPath = Join-Path $tempPath "archive.zip"
-        
-        Write-Host "Git not found. Downloading repository ZIP archive..." -ForegroundColor Gray
-        Invoke-RestMethod -Uri $zipUrl -OutFile $zipPath
-        
-        Write-Host "Extracting ZIP archive..." -ForegroundColor Gray
-        Expand-Archive -Path $zipPath -DestinationPath $tempPath
-        
-        # Extracted files go to a subfolder
-        $extractedDir = Join-Path $tempPath "roblox-best-practice-skill-main"
-        # Copy contents to root temp folder
-        Copy-Item -Path "$extractedDir\*" -Destination $tempPath -Recurse -Force
-        Remove-Item -Path $extractedDir -Recurse -Force
+  if (Get-Command git -ErrorAction SilentlyContinue) {
+    git clone --depth 1 https://github.com/andrian-syh/roblox-best-practice-skill.git $tempDir 2>$null | Out-Null
+  } else {
+    $zipUrl = "https://github.com/andrian-syh/roblox-best-practice-skill/archive/refs/heads/main.zip"
+    $zipPath = Join-Path $tempDir "archive.zip"
+    Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing
+    Expand-Archive -Path $zipPath -DestinationPath $tempDir -Force
+    # Move extracted files up
+    $extracted = Join-Path $tempDir "roblox-best-practice-skill-main"
+    Get-ChildItem $extracted | Move-Item -Destination $tempDir -Force
+    Remove-Item $extracted -Recurse -Force -ErrorAction SilentlyContinue
+  }
+
+  $srcSkillDir = Join-Path $tempDir "roblox-best-practices"
+  if (-not (Test-Path $srcSkillDir)) {
+    Write-Host "[ERROR] Failed to locate roblox-best-practices directory in download." -ForegroundColor Red
+    exit 1
+  }
+
+  function Copy-SkillFolder($src, $dest) {
+    if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+    New-Item -ItemType Directory -Path (Split-Path $dest -Parent) -Force | Out-Null
+    Copy-Item -Path $src -Destination $dest -Recurse -Force
+    Write-Host "[CREATED] $dest" -ForegroundColor Green
+  }
+
+  # Interactive menu
+  Write-Host ""
+  Write-Host "Where would you like to install the skill?"
+  Write-Host " 1) Claude Code (Global)                      -> ~/.claude/skills/"
+  Write-Host " 2) Claude Code (Local)                       -> ./.claude/skills/"
+  Write-Host " 3) Codex CLI (Global)                        -> ~/.codex/skills/"
+  Write-Host " 4) Codex CLI (Local)                         -> ./.codex/skills/"
+  Write-Host " 5) Gemini CLI (Global)                       -> ~/.gemini/skills/"
+  Write-Host " 6) Gemini CLI (Local)                        -> ./.gemini/skills/"
+  Write-Host " 7) Antigravity / Gemini Agent IDE (Global)   -> ~/.gemini/config/skills/"
+  Write-Host " 8) Antigravity / Gemini Agent IDE (Local)    -> ./.agents/skills/"
+  Write-Host " 9) Cursor (Global)                           -> ~/.cursor/skills/"
+  Write-Host "10) Cursor (Local)                            -> ./.cursor/skills/"
+  Write-Host "11) Windsurf / Devin Desktop (Global)         -> ~/.codeium/windsurf/skills/"
+  Write-Host "12) Windsurf / Devin Desktop (Local)          -> ./.windsurf/skills/"
+  Write-Host "13) Cline (Global)                            -> ~/.cline/skills/"
+  Write-Host "14) Cline (Local)                             -> ./.cline/skills/"
+  Write-Host "15) Roo Code (Global)                         -> ~/.roo/skills/"
+  Write-Host "16) Roo Code (Local)                          -> ./.roo/skills/"
+  Write-Host "17) Kilo Code (Global)                        -> ~/.kilo/skills/"
+  Write-Host "18) Kilo Code (Local)                         -> ./.kilo/skills/"
+  Write-Host "19) Trae AI (Global)                          -> ~/.trae/skills/"
+  Write-Host "20) Trae AI (Local)                           -> ./.trae/skills/"
+  Write-Host "21) Augment Code (Local)                      -> ./.augment/skills/"
+  Write-Host "22) Zed Editor (Local)                        -> ./.zed/skills/"
+  Write-Host "23) Amazon Q Developer (Local)                -> ./.amazonq/skills/"
+  Write-Host "24) OpenCode (Global)                         -> ~/.config/opencode/skills/"
+  Write-Host "25) OpenCode (Local)                          -> ./.opencode/skills/"
+  Write-Host "26) OpenClaude (Global)                       -> ~/.openclaude/skills/"
+  Write-Host "27) OpenClaude (Local)                        -> ./.openclaude/skills/"
+  Write-Host " L) All LOCAL targets"
+  Write-Host " G) All GLOBAL targets"
+  Write-Host " A) ALL targets"
+  Write-Host " C) Cancel"
+  Write-Host ""
+
+  $choice = Read-Host "Select option(s) (space-separated, e.g. 1 3 5 or L/G/A/C)"
+  $choice = $choice.Trim().ToUpper()
+
+  if ($choice -eq 'C') {
+    Write-Host "Installation cancelled."
+    exit 0
+  }
+
+  # Local indices: even-numbered + local-only tools (21,22,23)
+  $localIndices = @(2,4,6,8,10,12,14,16,18,20,21,22,23,25,27)
+  # Global indices: odd-numbered for paired, 24 for opencode, 26 for openclaude
+  $globalIndices = @(1,3,5,7,9,11,13,15,17,19,24,26)
+  $allIndices = 1..27
+
+  if ($choice -eq 'A') { $indices = $allIndices }
+  elseif ($choice -eq 'L') { $indices = $localIndices }
+  elseif ($choice -eq 'G') { $indices = $globalIndices }
+  else { $indices = $choice -split '\s+' | ForEach-Object { [int]$_ } }
+
+  $homeDir = $env:USERPROFILE
+
+  foreach ($opt in $indices) {
+    switch ($opt) {
+       1 { Copy-SkillFolder $srcSkillDir (Join-Path $homeDir ".claude\skills\roblox-best-practices") }
+       2 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".claude\skills\roblox-best-practices") }
+       3 { Copy-SkillFolder $srcSkillDir (Join-Path $homeDir ".codex\skills\roblox-best-practices") }
+       4 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".codex\skills\roblox-best-practices") }
+       5 { Copy-SkillFolder $srcSkillDir (Join-Path $homeDir ".gemini\skills\roblox-best-practices") }
+       6 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".gemini\skills\roblox-best-practices") }
+       7 { Copy-SkillFolder $srcSkillDir (Join-Path $homeDir ".gemini\config\skills\roblox-best-practices") }
+       8 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".agents\skills\roblox-best-practices") }
+       9 { Copy-SkillFolder $srcSkillDir (Join-Path $homeDir ".cursor\skills\roblox-best-practices") }
+      10 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".cursor\skills\roblox-best-practices") }
+      11 { Copy-SkillFolder $srcSkillDir (Join-Path $homeDir ".codeium\windsurf\skills\roblox-best-practices") }
+      12 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".windsurf\skills\roblox-best-practices") }
+      13 { Copy-SkillFolder $srcSkillDir (Join-Path $homeDir ".cline\skills\roblox-best-practices") }
+      14 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".cline\skills\roblox-best-practices") }
+      15 { Copy-SkillFolder $srcSkillDir (Join-Path $homeDir ".roo\skills\roblox-best-practices") }
+      16 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".roo\skills\roblox-best-practices") }
+      17 { Copy-SkillFolder $srcSkillDir (Join-Path $homeDir ".kilo\skills\roblox-best-practices") }
+      18 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".kilo\skills\roblox-best-practices") }
+      19 { Copy-SkillFolder $srcSkillDir (Join-Path $homeDir ".trae\skills\roblox-best-practices") }
+      20 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".trae\skills\roblox-best-practices") }
+      21 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".augment\skills\roblox-best-practices") }
+      22 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".zed\skills\roblox-best-practices") }
+      23 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".amazonq\skills\roblox-best-practices") }
+      24 { Copy-SkillFolder $srcSkillDir (Join-Path $homeDir ".config\opencode\skills\roblox-best-practices") }
+      25 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".opencode\skills\roblox-best-practices") }
+      26 { Copy-SkillFolder $srcSkillDir (Join-Path $homeDir ".openclaude\skills\roblox-best-practices") }
+      27 { Copy-SkillFolder $srcSkillDir (Join-Path "." ".openclaude\skills\roblox-best-practices") }
+      default { Write-Host "[WARNING] Invalid option: $opt" -ForegroundColor Yellow }
     }
+  }
 
-    $srcSkillDir = Join-Path $tempPath "roblox-best-practices"
-    if (-not (Test-Path $srcSkillDir)) {
-        throw "Failed to locate roblox-best-practices folder in downloaded repository."
-    }
+  Write-Host ""
+  Write-Host "[SUCCESS] Installation complete!" -ForegroundColor Green
 
-    function Copy-Folder {
-        param($src, $dest)
-        if (Test-Path $dest) {
-            Remove-Item -Recurse -Force $dest -ErrorAction SilentlyContinue
-        }
-        $parent = Split-Path -Parent $dest
-        if (-not (Test-Path $parent)) {
-            New-Item -ItemType Directory -Path $parent | Out-Null
-        }
-        Copy-Item -Path $src -Destination $dest -Recurse -Force
-        Write-Host "[CREATED] $dest" -ForegroundColor Green
-    }
-
-    function Copy-File {
-        param($src, $dest)
-        $parent = Split-Path -Parent $dest
-        if (-not (Test-Path $parent)) {
-            New-Item -ItemType Directory -Path $parent | Out-Null
-        }
-        Copy-Item -Path $src -Destination $dest -Force
-        Write-Host "[CREATED] $dest" -ForegroundColor Green
-    }
-
-    Write-Host ""
-    Write-Host "Where would you like to install the skill?" -ForegroundColor Cyan
-    Write-Host "1) Antigravity / Gemini Agent IDE (Global) -> ~/.gemini/config/skills/"
-    Write-Host "2) Antigravity / Gemini Agent IDE (Local)  -> ./.agents/skills/"
-    Write-Host "3) Claude Code CLI (Global)                -> ~/.claude/skills/"
-    Write-Host "4) Claude Code CLI (Local)                 -> ./.claude/skills/"
-    Write-Host "5) Cursor (Local)                          -> ./.cursor/rules/"
-    Write-Host "6) Windsurf (Local)                        -> ./.windsurf/rules/"
-    Write-Host "7) Cline / Roo Code (Local)                -> .clinerules & .roorules"
-    Write-Host "8) GitHub Copilot (Local)                  -> .github/copilot-instructions.md"
-    Write-Host "A) All Local targets"
-    Write-Host "B) All Global targets"
-    Write-Host "C) Cancel"
-    
-    $choice = Read-Host "Select option(s) (space-separated, e.g. 1 3 5 or A/B/C)"
-    $choice = $choice.Trim().ToUpper()
-
-    if ($choice -eq "C" -or $choice -eq "") {
-        Write-Host "Installation cancelled." -ForegroundColor Yellow
-        return
-    }
-    
-    $opts = @()
-    if ($choice -eq "A") {
-        $opts = @("2", "4", "5", "6", "7", "8")
-    } elseif ($choice -eq "B") {
-        $opts = @("1", "3")
-    } else {
-        $opts = $choice -split "\s+"
-    }
-
-    $homePath = $HOME
-    $currentPath = Get-Location
-
-    foreach ($opt in $opts) {
-        switch ($opt) {
-            "1" {
-                $dest = Join-Path $homePath ".gemini\config\skills\roblox-best-practices"
-                Copy-Folder $srcSkillDir $dest
-            }
-            "2" {
-                $dest = Join-Path $currentPath ".agents\skills\roblox-best-practices"
-                Copy-Folder $srcSkillDir $dest
-            }
-            "3" {
-                $dest = Join-Path $homePath ".claude\skills\roblox-best-practices"
-                Copy-Folder $srcSkillDir $dest
-            }
-            "4" {
-                $dest = Join-Path $currentPath ".claude\skills\roblox-best-practices"
-                Copy-Folder $srcSkillDir $dest
-            }
-            "5" {
-                $mdcFile = Join-Path $currentPath ".cursor\rules\roblox-best-practices.mdc"
-                $parent = Split-Path -Parent $mdcFile
-                if (-not (Test-Path $parent)) {
-                    New-Item -ItemType Directory -Path $parent | Out-Null
-                }
-                
-                $frontmatter = @"
----
-description: Framework-agnostic Roblox/Luau coding standards and best practices
-globs: ["**/*.lua", "**/*.luau"]
-alwaysApply: true
----
-
-
-"@
-                $skillContent = Get-Content -Raw -Path (Join-Path $srcSkillDir "SKILL.md")
-                Set-Content -Path $mdcFile -Value ($frontmatter + $skillContent) -Encoding utf8
-                Write-Host "[CREATED] $mdcFile" -ForegroundColor Green
-                
-                Copy-Folder (Join-Path $srcSkillDir "references") (Join-Path $parent "references")
-            }
-            "6" {
-                Copy-File (Join-Path $srcSkillDir "SKILL.md") (Join-Path $currentPath ".windsurf\rules\roblox-best-practices.md")
-                Copy-Folder (Join-Path $srcSkillDir "references") (Join-Path $currentPath ".windsurf\rules\references")
-                Copy-File (Join-Path $srcSkillDir "SKILL.md") (Join-Path $currentPath ".windsurfrules")
-                Copy-Folder (Join-Path $srcSkillDir "references") (Join-Path $currentPath "references")
-            }
-            "7" {
-                Copy-File (Join-Path $srcSkillDir "SKILL.md") (Join-Path $currentPath ".clinerules")
-                Copy-File (Join-Path $srcSkillDir "SKILL.md") (Join-Path $currentPath ".roorules")
-                Copy-Folder (Join-Path $srcSkillDir "references") (Join-Path $currentPath "references")
-            }
-            "8" {
-                Copy-File (Join-Path $srcSkillDir "SKILL.md") (Join-Path $currentPath ".github\copilot-instructions.md")
-                Copy-Folder (Join-Path $srcSkillDir "references") (Join-Path $currentPath ".github\references")
-            }
-            Default {
-                Write-Host "Invalid option ignored: $opt" -ForegroundColor Red
-            }
-        }
-    }
-    
-    Write-Host "`n[SUCCESS] Installation complete!" -ForegroundColor Green
-
-} catch {
-    Write-Host "`n[ERROR] Installation failed: $_" -ForegroundColor Red
 } finally {
-    # Cleanup
-    if (Test-Path $tempPath) {
-        Remove-Item -Recurse -Force $tempPath -ErrorAction SilentlyContinue
-    }
+  # Cleanup temp directory
+  if (Test-Path $tempDir) {
+    Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+  }
 }
