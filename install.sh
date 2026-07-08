@@ -17,7 +17,7 @@ echo "${BLUE}========================================================${NC}"
 # Check if Node.js/npm is available
 if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
   echo "Node.js detected. Launching NPM-based CLI installer..."
-  npx github:andrian-syh/roblox-best-practice-skill "$@"
+  npx github:andrian-syh/roblox-best-practices-skill "$@"
   exit 0
 fi
 
@@ -33,10 +33,10 @@ trap cleanup EXIT
 # Download the skill files
 echo "Downloading skill files..."
 if command -v git >/dev/null 2>&1; then
-  git clone --depth 1 https://github.com/andrian-syh/roblox-best-practice-skill.git "$TEMP_DIR" > /dev/null 2>&1
+  git clone --depth 1 https://github.com/andrian-syh/roblox-best-practices-skill.git "$TEMP_DIR" > /dev/null 2>&1
 else
   # Fallback to downloading ZIP
-  ZIP_URL="https://github.com/andrian-syh/roblox-best-practice-skill/archive/refs/heads/main.zip"
+  ZIP_URL="https://github.com/andrian-syh/roblox-best-practices-skill/archive/refs/heads/main.zip"
   if command -v curl >/dev/null 2>&1; then
     curl -fsSL "$ZIP_URL" -o "$TEMP_DIR/archive.zip"
   elif command -v wget >/dev/null 2>&1; then
@@ -48,7 +48,7 @@ else
   
   if command -v unzip >/dev/null 2>&1; then
     unzip -q "$TEMP_DIR/archive.zip" -d "$TEMP_DIR"
-    mv "$TEMP_DIR"/roblox-best-practice-skill-main/* "$TEMP_DIR"/ || true
+    mv "$TEMP_DIR"/roblox-best-practices-skill-main/* "$TEMP_DIR"/ || true
   else
     echo "${RED}[ERROR] 'unzip' utility not found. Please install unzip or Node.js to continue.${NC}"
     exit 1

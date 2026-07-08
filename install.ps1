@@ -9,7 +9,7 @@ Write-Host "========================================================" -Foregroun
 # Check if Node.js/npm is available, prefer npx-based CLI
 if ((Get-Command node -ErrorAction SilentlyContinue) -and (Get-Command npm -ErrorAction SilentlyContinue)) {
   Write-Host "Node.js detected. Launching NPM-based CLI installer..."
-  npx github:andrian-syh/roblox-best-practice-skill @args
+  npx github:andrian-syh/roblox-best-practices-skill @args
   exit
 }
 
@@ -21,14 +21,14 @@ New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
 
 try {
   if (Get-Command git -ErrorAction SilentlyContinue) {
-    git clone --depth 1 https://github.com/andrian-syh/roblox-best-practice-skill.git $tempDir 2>$null | Out-Null
+    git clone --depth 1 https://github.com/andrian-syh/roblox-best-practices-skill.git $tempDir 2>$null | Out-Null
   } else {
-    $zipUrl = "https://github.com/andrian-syh/roblox-best-practice-skill/archive/refs/heads/main.zip"
+    $zipUrl = "https://github.com/andrian-syh/roblox-best-practices-skill/archive/refs/heads/main.zip"
     $zipPath = Join-Path $tempDir "archive.zip"
     Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing
     Expand-Archive -Path $zipPath -DestinationPath $tempDir -Force
     # Move extracted files up
-    $extracted = Join-Path $tempDir "roblox-best-practice-skill-main"
+    $extracted = Join-Path $tempDir "roblox-best-practices-skill-main"
     Get-ChildItem $extracted | Move-Item -Destination $tempDir -Force
     Remove-Item $extracted -Recurse -Force -ErrorAction SilentlyContinue
   }

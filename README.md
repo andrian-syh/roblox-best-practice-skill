@@ -4,52 +4,30 @@ A framework-agnostic coding standards and best practices skill for Roblox and Lu
 
 ---
 
-## Supported AI Tools & Agents (by Popularity)
-
-This repository includes a multi-agent installer that automatically configures this skill for your preferred AI editor, CLI, or extension:
-
-- **Claude Code**: Global (`~/.claude/skills/`) and local (`.claude/skills/`) skill configuration.
-- **Codex CLI**: Global (`~/.codex/skills/`) and local (`.codex/skills/`) skill configuration.
-- **Gemini CLI**: Global (`~/.gemini/skills/`) and local (`.gemini/skills/`) skill configuration.
-- **Antigravity / Gemini Agent IDE**: Global (`~/.gemini/config/skills/`) and local (`.agents/skills/`) skill configuration.
-- **Cursor**: Global (`~/.cursor/skills/`) and local (`.cursor/skills/`) skill configuration.
-- **Windsurf / Devin Desktop**: Global (`~/.codeium/windsurf/skills/`) and local (`.windsurf/skills/`) skill configuration.
-- **Cline**: Global (`~/.cline/skills/`) and local (`.cline/skills/`) skill configuration.
-- **Roo Code**: Global (`~/.roo/skills/`) and local (`.roo/skills/`) skill configuration.
-- **Kilo Code**: Global (`~/.kilo/skills/`) and local (`.kilo/skills/`) skill configuration.
-- **Trae AI**: Global (`~/.trae/skills/`) and local (`.trae/skills/`) skill configuration.
-- **Augment Code**: Local skill via `.augment/skills/` (also reads `.agents/skills/`).
-- **Zed Editor**: Local skill via `.zed/skills/`, or via Zed's built-in Skills Manager.
-- **Amazon Q Developer**: Local skill via `.amazonq/skills/`.
-- **OpenCode**: Global (`~/.config/opencode/skills/`) and local (`.opencode/skills/`) skill configuration.
-- **OpenClaude**: Global (`~/.openclaude/skills/`) and local (`.openclaude/skills/`) skill configuration.
-
----
-
 ## Installation
 
-You can install this skill globally or locally for your project using one of the following methods.
+This repository includes a multi-agent installer that automatically configures this skill for your preferred AI editor, CLI, or extension. You can install this skill globally or locally for your project using one of the following methods.
 
 ### Method 1: Using `npx` (Node.js Required - Recommended)
 
 Run the interactive installer directly in your terminal:
 
 ```bash
-npx github:andrian-syh/roblox-best-practice-skill
+npx github:andrian-syh/roblox-best-practices-skill
 ```
 
 #### CLI Flags (Non-Interactive)
 
 You can pass flags to automate the installation:
 
-- **All Local Tools**: `npx github:andrian-syh/roblox-best-practice-skill --all-local` (or `-al`)
-- **All Global Configs**: `npx github:andrian-syh/roblox-best-practice-skill --all-global` (or `-ag`)
-- **All Supported Tools**: `npx github:andrian-syh/roblox-best-practice-skill --all` (or `-a`)
+- **All Local Tools**: `--all-local` (or `-al`)
+- **All Global Configs**: `--all-global` (or `-ag`)
+- **All Supported Tools**: `--all` (or `-a`)
 - **Specific Tools**:
-  - `npx github:andrian-syh/roblox-best-practice-skill --claude-local` (Claude Code local)
-  - `npx github:andrian-syh/roblox-best-practice-skill --cursor` (Cursor)
-  - `npx github:andrian-syh/roblox-best-practice-skill --codex-local` (Codex CLI local)
-  - *(Run `npx github:andrian-syh/roblox-best-practice-skill --help` to see all specific flags)*
+  - `--claude-local` (Claude Code local)
+  - `--cursor-local` (Cursor local)
+  - `--codex-local` (Codex CLI local)
+  - *(Run `npx github:andrian-syh/roblox-best-practices-skill --help` to see all specific flags)*
 
 ---
 
@@ -58,7 +36,7 @@ You can pass flags to automate the installation:
 Runs the installer directly from GitHub (runs via `npx` if Node is installed, otherwise falls back to a POSIX shell menu):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/andrian-syh/roblox-best-practice-skill/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/andrian-syh/roblox-best-practices-skill/main/install.sh | bash
 ```
 
 ---
@@ -68,8 +46,32 @@ curl -fsSL https://raw.githubusercontent.com/andrian-syh/roblox-best-practice-sk
 Runs the installer directly from GitHub (runs via `npx` if Node is installed, otherwise falls back to a PowerShell menu):
 
 ```powershell
-irm https://raw.githubusercontent.com/andrian-syh/roblox-best-practice-skill/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/andrian-syh/roblox-best-practices-skill/main/install.ps1 | iex
 ```
+
+---
+
+## Supported AI Tools & Agents
+
+| Tool / Agent | Global Configuration Path | Local Configuration Path |
+|--------------|---------------------------|--------------------------|
+| **Claude Code** | `~/.claude/skills/` | `.claude/skills/` |
+| **Codex CLI** | `~/.codex/skills/` | `.codex/skills/` |
+| **Gemini CLI** | `~/.gemini/skills/` | `.gemini/skills/` |
+| **Antigravity / Gemini Agent IDE** | `~/.gemini/config/skills/` | `.agents/skills/` |
+| **Cursor** | `~/.cursor/skills/` | `.cursor/skills/` |
+| **Windsurf / Devin Desktop** | `~/.codeium/windsurf/skills/` | `.windsurf/skills/` |
+| **Cline** | `~/.cline/skills/` | `.cline/skills/` |
+| **Roo Code** | `~/.roo/skills/` | `.roo/skills/` |
+| **Kilo Code** | `~/.kilo/skills/` | `.kilo/skills/` |
+| **Trae AI** | `~/.trae/skills/` | `.trae/skills/` |
+| **Augment Code** | *(N/A)* | `.augment/skills/` |
+| **Zed Editor** | `~/.config/zed/` | `.zed/skills/` |
+| **Amazon Q Developer** | *(N/A)* | `.amazonq/skills/` |
+| **OpenCode** | `~/.config/opencode/skills/` | `.opencode/skills/` |
+| **OpenClaude** | `~/.openclaude/skills/` | `.openclaude/skills/` |
+
+> **Note**: Any other AI coding agent or tool that supports the open Agent Skills standard (`SKILL.md`) should also be able to use this skill seamlessly by placing the skill folder in its designated skills directory.
 
 ---
 
@@ -93,11 +95,13 @@ Once installed, your AI agent will enforce the following standards for all Luau 
    
    -- // INITIALIZATION // --
    ```
+
 2. **Language Rules**:
    - Start with `--!strict` typing.
    - Use `game:GetService()` (never direct service indexing).
    - Use modern/non-deprecated APIs (`task.wait()`, constraints instead of body movers, etc.).
    - Wrap yielding API calls (`DataStore`, `MarketplaceService`) in `pcall`.
+
 3. **Non-Negotiable Runtime Rules**:
    - **Server Authority**: Never trust the client; validate all remote arguments.
    - **No Memory Leaks**: Clean up all connections and instances (`Destroy()`).

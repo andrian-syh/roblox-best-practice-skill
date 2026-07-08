@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/andrian-syh/roblox-best-practice-skill.git"
+    "url": "git+https://github.com/andrian-syh/roblox-best-practices-skill.git"
   },
   "keywords": [
     "roblox",
@@ -43,7 +43,7 @@
   "author": "andrian-syh",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/andrian-syh/roblox-best-practice-skill/issues"
+    "url": "https://github.com/andrian-syh/roblox-best-practices-skill/issues"
   },
-  "homepage": "https://github.com/andrian-syh/roblox-best-practice-skill#readme"
+  "homepage": "https://github.com/andrian-syh/roblox-best-practices-skill#readme"
 }
