@@ -45,5 +45,8 @@
   "bugs": {
     "url": "https://github.com/andrian-syh/roblox-best-practices-skill/issues"
   },
-  "homepage": "https://github.com/andrian-syh/roblox-best-practices-skill#readme"
+  "homepage": "https://github.com/andrian-syh/roblox-best-practices-skill#readme",
+  "dependencies": {
+    "prompts": "^2.4.2"
+  }
 }

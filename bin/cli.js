@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const readline = require('readline');
+const prompts = require('prompts');
 
 const srcSkillDir = path.join(__dirname, '../roblox-best-practices');
 const homeDir = os.homedir();
@@ -361,51 +361,60 @@ if (selectedTargets.length > 0) {
   process.exit(0);
 }
 
-// Interactive prompt
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+// Interactive prompt using prompts library
+(async () => {
+  console.log('\x1b[36m========================================================\x1b[0m');
+  console.log('\x1b[36m       Roblox Best Practices Skill Installer CLI        \x1b[0m');
+  console.log('\x1b[36m========================================================\x1b[0m\n');
 
-console.log('========================================================');
-console.log('       Roblox Best Practices Skill Installer CLI        ');
-console.log('========================================================');
-console.log('Select the tools/assistants you want to install this skill for:');
-keys.forEach((key, idx) => {
-  console.log(`${(idx + 1).toString().padStart(2)}) [ ] ${targets[key].name.padEnd(48)} - ${targets[key].desc}`);
-});
-console.log(' L) [ ] Select All LOCAL tools');
-console.log(' G) [ ] Select All GLOBAL tools');
-console.log(' A) [ ] Select ALL tools');
-console.log('========================================================');
+  const choices = keys.map(key => ({
+    title: targets[key].name,
+    description: targets[key].desc,
+    value: key
+  }));
+  
+  // Add quick selections at the top
+  choices.unshift(
+    { title: '\x1b[31m--- Cancel Installation ---\x1b[0m', value: 'CANCEL', description: 'Exit without installing anything' },
+    { title: '\x1b[33m--- Select All LOCAL Tools ---\x1b[0m', value: 'ALL_LOCAL', description: 'Installs for all local projects' },
+    { title: '\x1b[33m--- Select All GLOBAL Tools ---\x1b[0m', value: 'ALL_GLOBAL', description: 'Installs globally for all tools' }
+  );
 
-rl.question('Enter numbers separated by spaces (e.g. 1 2 5) or L / G / A: ', (answer) => {
-  const ans = answer.trim().toUpperCase();
-  let keysToInstall = [];
+  const response = await prompts({
+    type: 'multiselect',
+    name: 'selected',
+    message: 'Select the tools/assistants you want to install this skill for:',
+    choices: choices,
+    instructions: false,
+    hint: '- Space to select. Return to submit',
+    min: 1
+  });
 
-  if (ans === 'A') {
-    keysToInstall = keys;
-  } else if (ans === 'L') {
-    keysToInstall = keys.filter(k => !k.endsWith('Global'));
-  } else if (ans === 'G') {
-    keysToInstall = keys.filter(k => k.endsWith('Global'));
-  } else {
-    const indices = ans.split(/\s+/).map(x => parseInt(x, 10)).filter(n => !isNaN(n) && n >= 1 && n <= keys.length);
-    keysToInstall = indices.map(idx => keys[idx - 1]);
-  }
+  let keysToInstall = response.selected;
 
-  if (keysToInstall.length === 0) {
-    console.log('\n[CANCELLED] No targets selected.');
-    rl.close();
+  if (!keysToInstall || keysToInstall.length === 0 || keysToInstall.includes('CANCEL')) {
+    console.log('\n\x1b[31m[CANCELLED] Installation cancelled.\x1b[0m');
     process.exit(0);
   }
 
-  console.log(`\nInstalling for ${keysToInstall.length} target(s)...`);
+  // Handle "Select All" macros
+  if (keysToInstall.includes('ALL_LOCAL')) {
+    const localKeys = keys.filter(k => !k.endsWith('Global'));
+    keysToInstall = [...new Set([...keysToInstall, ...localKeys])];
+  }
+  if (keysToInstall.includes('ALL_GLOBAL')) {
+    const globalKeys = keys.filter(k => k.endsWith('Global'));
+    keysToInstall = [...new Set([...keysToInstall, ...globalKeys])];
+  }
+  
+  // Remove macro values
+  keysToInstall = keysToInstall.filter(k => k !== 'ALL_LOCAL' && k !== 'ALL_GLOBAL');
+
+  console.log(`\n\x1b[32mInstalling for ${keysToInstall.length} target(s)...\x1b[0m`);
   keysToInstall.forEach(key => {
-    console.log(`\n--- Installing ${targets[key].name} ---`);
+    console.log(`\n--- Installing \x1b[36m${targets[key].name}\x1b[0m ---`);
     targets[key].install();
   });
 
-  console.log('\n[SUCCESS] Installation complete!');
-  rl.close();
-});
+  console.log('\n\x1b[32m[SUCCESS] Installation complete!\x1b[0m');
+})();
