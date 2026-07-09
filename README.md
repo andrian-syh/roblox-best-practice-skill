@@ -81,36 +81,49 @@ You can pass flags to the installer to automate configuration:
 
 ## Skill Conventions & Standards
 
-Once installed, your AI agent will enforce the following standards for all Luau files:
+Once installed, your AI agent will be armed with standard guidelines, templates, and best practices tailored to your project setup:
 
-1. **Mandatory Script Section Layout**:
-   All scripts must follow this exact order:
-   ```lua
-   -- // VARIABLES // --
-   -- | Services | --
-   -- | Modules | --
-   -- | Objects | --
-   -- | Configuration | --
-   -- | State Management | --
-   
-   -- // FUNCTIONS // --
-   -- | Private | --
-   -- | Public | --
-   
-   -- // INITIALIZATION // --
-   ```
+### 1. Dual Operational Modes
+- **Default Mode**: Appointed for new projects or when starting fresh. The agent strictly enforces standard layout, naming, and Luau typing conventions.
+- **Adaptive Mode**: Designed for existing codebases. The agent studies the project's existing coding structures and conventions, proposes adapted styles for user approval, and then implements code matching the project's native style.
 
-2. **Language Rules**:
-   - Start with `--!strict` typing.
-   - Use `game:GetService()` (never direct service indexing).
-   - Use modern/non-deprecated APIs (`task.wait()`, constraints instead of body movers, etc.).
-   - Wrap yielding API calls (`DataStore`, `MarketplaceService`) in `pcall`.
+### 2. Supervision Control
+The installer supports inline control tokens to control the agent's autonomy level:
+- **`!ask` (Supervised)**: Confirm before every decision (conventions, file writes, modifications).
+- **`!bal` (Balanced - Default)**: Proceed automatically for standard actions, stopping only for destructive changes or real ambiguity.
+- **`!go` (Autonomous)**: Move forward without prompts; record assumptions in the final summary.
 
-3. **Non-Negotiable Runtime Rules**:
-   - **Server Authority**: Never trust the client; validate all remote arguments.
-   - **No Memory Leaks**: Clean up all connections and instances (`Destroy()`).
-   - **Performance**: No table/string allocations inside `RunService` per-frame loops.
-   - **Event-driven**: React to changes; never poll with `while task.wait() do`.
+### 3. Structured Reference Routing
+The skill routes coding logic through modular reference sheets depending on the task:
+- **Templates**: [references/templates.md](references/templates.md) - Standard section layouts for Scripts, LocalScripts, and ModuleScripts.
+- **Adaptive Mode**: [references/adaptive-mode.md](references/adaptive-mode.md) - Workflow checklist for analyzing project structures.
+- **Community Libraries**: [references/community-libraries.md](references/community-libraries.md) - Best practices for Knit, ProfileStore, ByteNet, Fusion, Trove, etc.
+- **Performance**: [references/performance.md](references/performance.md) - Loop optimizations, garbage collection, and resource-frugal memory practices.
+- **Security & Monetization**: [references/security-monetization.md](references/security-monetization.md) - Server authority, remote validation depth, and handling purchases.
+- **Genres**: [references/genres.md](references/genres.md) - Specific advice based on the game type (Simulator, Obby, FPS, horror, RPG, etc.).
+
+### 4. Basic Script Layout
+For standard new files, scripts are divided into distinct sections:
+```lua
+-- // VARIABLES // --
+-- | Services | --
+-- | Modules | --
+-- | Objects | --
+-- | Configuration | --
+-- | State Management | --
+
+-- // FUNCTIONS // --
+-- | Private | --
+-- | Public | --
+
+-- // INITIALIZATION // --
+```
+
+### 5. Critical Runtime Rules
+- **Server Authority**: Never trust the client; validate all RemoteEvent/RemoteFunction arguments.
+- **No Memory Leaks**: Clean up event connections and call `:Destroy()` on unused instances.
+- **RunService Safety**: No table or string allocations in high-frequency per-frame loops.
+- **Event-Driven**: Listen for state changes; never poll using busy loops (`while task.wait() do`).
 
 ---
 
