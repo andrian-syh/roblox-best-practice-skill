@@ -3,9 +3,11 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const https = require('https');
+const { execSync } = require('child_process');
 const prompts = require('prompts');
 
-const srcSkillDir = path.join(__dirname, '../roblox-best-practices');
+const localSkillDir = path.join(__dirname, '../roblox-best-practices');
 const cwd = process.cwd();
 
 // Helper to copy file
@@ -36,6 +38,98 @@ function copyFolderRecursiveSync(src, dest) {
     }
   } catch (err) {
     console.error(`[ERROR] Failed to copy from ${src} to ${dest}: ${err.message}`);
+  }
+}
+
+// Fetch available tags from GitHub API
+function fetchGithubTags() {
+  return new Promise((resolve) => {
+    const options = {
+      hostname: 'api.github.com',
+      path: '/repos/andrian-syh/roblox-best-practices-skill/tags',
+      headers: {
+        'User-Agent': 'roblox-best-practices-skill-installer'
+      },
+      timeout: 3000
+    };
+
+    https.get(options, (res) => {
+      if (res.statusCode !== 200) {
+        resolve([]);
+        return;
+      }
+
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const tags = JSON.parse(data).map(t => t.name);
+          resolve(tags);
+        } catch (e) {
+          resolve([]);
+        }
+      });
+    }).on('error', () => {
+      resolve([]);
+    });
+  });
+}
+
+// Download a specific tag from GitHub to a temporary directory
+function downloadVersion(tag) {
+  const tempDir = path.join(os.tmpdir(), `roblox_skill_${Math.random().toString(36).substr(2, 9)}`);
+  console.log(`Downloading version ${tag} to temporary directory...`);
+  
+  try {
+    let hasGit = false;
+    try {
+      execSync('git --version', { stdio: 'ignore' });
+      hasGit = true;
+    } catch (e) {}
+
+    if (hasGit) {
+      execSync(`git clone --depth 1 --branch ${tag} https://github.com/andrian-syh/roblox-best-practices-skill.git "${tempDir}"`, { stdio: 'ignore' });
+    } else {
+      fs.mkdirSync(tempDir, { recursive: true });
+      const zipUrl = `https://github.com/andrian-syh/roblox-best-practices-skill/archive/refs/tags/${tag}.zip`;
+      const zipPath = path.join(tempDir, 'archive.zip');
+      
+      if (process.platform === 'win32') {
+        execSync(`powershell.exe -Command "Invoke-WebRequest -Uri '${zipUrl}' -OutFile '${zipPath}' -UseBasicParsing"`, { stdio: 'ignore' });
+        execSync(`powershell.exe -Command "Expand-Archive -Path '${zipPath}' -DestinationPath '${tempDir}' -Force"`, { stdio: 'ignore' });
+      } else {
+        execSync(`curl -fsSL "${zipUrl}" -o "${zipPath}"`, { stdio: 'ignore' });
+        execSync(`unzip -q "${zipPath}" -d "${tempDir}"`, { stdio: 'ignore' });
+      }
+      
+      // Move extracted files up
+      const tagFolderSuffix = tag.replace(/^v/, '');
+      const extractedDir = path.join(tempDir, `roblox-best-practices-skill-${tagFolderSuffix}`);
+      if (fs.existsSync(extractedDir)) {
+        fs.readdirSync(extractedDir).forEach(file => {
+          fs.renameSync(path.join(extractedDir, file), path.join(tempDir, file));
+        });
+        fs.rmdirSync(extractedDir);
+      }
+    }
+    
+    const downloadedSkillDir = path.join(tempDir, 'roblox-best-practices');
+    if (!fs.existsSync(downloadedSkillDir)) {
+      throw new Error('Downloaded folder structure invalid.');
+    }
+    
+    return { tempDir, skillDir: downloadedSkillDir };
+  } catch (err) {
+    console.error(`\x1b[31m[ERROR] Failed to download version ${tag}: ${err.message}\x1b[0m`);
+    process.exit(1);
+  }
+}
+
+function cleanupTempDir(tempDir) {
+  if (tempDir && fs.existsSync(tempDir)) {
+    try {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    } catch (e) {}
   }
 }
 
@@ -105,13 +199,13 @@ const additionalAgents = [
 ];
 
 // Execute installation for a given target object
-function executeInstall(agent) {
+function executeInstall(agent, skillDir) {
   const dest = path.join(cwd, agent.path, 'roblox-best-practices');
   const parentDir = path.dirname(dest);
   
   if (fs.existsSync(parentDir)) {
     console.log(`\n--- Installing \x1b[36m${agent.name}\x1b[0m ---`);
-    copyFolderRecursiveSync(srcSkillDir, dest);
+    copyFolderRecursiveSync(skillDir, dest);
   } else {
     console.log(`\x1b[33m[SKIPPED]\x1b[0m ${agent.name} (parent directory ${path.relative(cwd, parentDir) || parentDir} not found)`);
   }
@@ -119,6 +213,12 @@ function executeInstall(agent) {
 
 // Argument parsing for automation/non-interactive
 const args = process.argv.slice(2);
+
+let chosenTag = 'latest';
+const tagArgIndex = args.findIndex(arg => arg === '--tag' || arg === '-t');
+if (tagArgIndex !== -1 && args[tagArgIndex + 1]) {
+  chosenTag = args[tagArgIndex + 1];
+}
 
 if (args.includes('--help') || args.includes('-h')) {
   console.log(`
@@ -129,21 +229,34 @@ Usage:
 
 Options:
   -a, --all                   Install for all supported additional agents
+  -t, --tag <tag_name>        Target a specific version tag from GitHub (e.g. v1.0.0, v1.1.7)
   -h, --help                  Show this help message
   `);
   process.exit(0);
 }
 
 if (args.includes('--all') || args.includes('-a')) {
-  console.log('Installing to Universal and all selected additional agents...');
+  console.log(`Installing version '${chosenTag}' to Universal and all selected additional agents...`);
+  
+  let activeSkillDir = localSkillDir;
+  let tempCleanDir = null;
+
+  if (chosenTag !== 'latest') {
+    const downloadResult = downloadVersion(chosenTag);
+    activeSkillDir = downloadResult.skillDir;
+    tempCleanDir = downloadResult.tempDir;
+  }
+
   // Universal
   console.log(`\n--- Installing \x1b[36mUniversal (.agents/skills)\x1b[0m ---`);
-  copyFolderRecursiveSync(srcSkillDir, path.join(cwd, '.agents/skills/roblox-best-practices'));
+  copyFolderRecursiveSync(activeSkillDir, path.join(cwd, '.agents/skills/roblox-best-practices'));
   
   // All additional
   additionalAgents.forEach(agent => {
-    executeInstall(agent);
+    executeInstall(agent, activeSkillDir);
   });
+
+  cleanupTempDir(tempCleanDir);
   console.log('\n\x1b[32m[SUCCESS] Installation complete!\x1b[0m');
   process.exit(0);
 }
@@ -154,7 +267,46 @@ if (args.includes('--all') || args.includes('-a')) {
   console.log('\x1b[36m       Roblox Best Practices Skill Installer CLI        \x1b[0m');
   console.log('\x1b[36m========================================================\x1b[0m\n');
 
-  console.log(`\x1b[32m•\x1b[0m ${additionalAgents.length + 9} agents`);
+  // Step 1: Select Version
+  console.log('Fetching available tags from GitHub...');
+  const tags = await fetchGithubTags();
+  
+  const versionChoices = [
+    { title: 'Latest (Local bundled v1.1.7)', value: 'latest', description: 'Installs the latest version instantly' }
+  ];
+
+  if (tags.length > 0) {
+    tags.forEach(tag => {
+      versionChoices.push({
+        title: `${tag} (Download from GitHub)`,
+        value: tag,
+        description: `Downloads and installs version ${tag}`
+      });
+    });
+  } else {
+    // Fallback static choices if offline/rate-limited
+    versionChoices.push(
+      { title: 'v1.1.7 (Download from GitHub)', value: 'v1.1.7', description: 'Downloads and installs v1.1.7' },
+      { title: 'v1.0.0 (Download from GitHub)', value: 'v1.0.0', description: 'Downloads and installs v1.0.0' }
+    );
+  }
+
+  const versionResponse = await prompts({
+    type: 'select',
+    name: 'version',
+    message: 'Select the skill version to install:',
+    choices: versionChoices
+  });
+
+  if (!versionResponse.version) {
+    console.log('\n\x1b[31m[CANCELLED] Installation cancelled.\x1b[0m');
+    process.exit(0);
+  }
+
+  const selectedTag = versionResponse.version;
+
+  // Step 2: Select Targets
+  console.log(`\n\x1b[32m•\x1b[0m ${additionalAgents.length + 9} agents`);
   console.log('\x1b[32m•\x1b[0m Which agents do you want to install to?\n');
   console.log('  \x1b[90m— Universal (.agents/skills) — always included —————\x1b[0m');
   console.log('    \x1b[32m•\x1b[0m Amp');
@@ -168,7 +320,7 @@ if (args.includes('--all') || args.includes('-a')) {
   console.log('    \x1b[32m•\x1b[0m Zed');
   console.log('    \x1b[90m...and 4 more\x1b[0m\n');
 
-  const choices = additionalAgents.map(agent => {
+  const targetChoices = additionalAgents.map(agent => {
     const parentPath = path.dirname(path.join(cwd, agent.path));
     const exists = fs.existsSync(parentPath);
     return {
@@ -182,7 +334,7 @@ if (args.includes('--all') || args.includes('-a')) {
     type: 'autocompleteMultiselect',
     name: 'selected',
     message: '— Additional agents —',
-    choices: choices,
+    choices: targetChoices,
     hint: '- Type to search, Space to select, Enter to confirm',
     instructions: false
   });
@@ -194,16 +346,27 @@ if (args.includes('--all') || args.includes('-a')) {
 
   const selectedAgents = response.selected || [];
 
+  // Download older version if required
+  let activeSkillDir = localSkillDir;
+  let tempCleanDir = null;
+
+  if (selectedTag !== 'latest') {
+    const downloadResult = downloadVersion(selectedTag);
+    activeSkillDir = downloadResult.skillDir;
+    tempCleanDir = downloadResult.tempDir;
+  }
+
   console.log(`\n\x1b[32mInstalling skill...\x1b[0m`);
   
   // 1. Always install to Universal
   console.log(`\n--- Installing \x1b[36mUniversal (.agents/skills)\x1b[0m ---`);
-  copyFolderRecursiveSync(srcSkillDir, path.join(cwd, '.agents/skills/roblox-best-practices'));
+  copyFolderRecursiveSync(activeSkillDir, path.join(cwd, '.agents/skills/roblox-best-practices'));
 
   // 2. Install to selected additional agents (only if parent dir exists)
   selectedAgents.forEach(agent => {
-    executeInstall(agent);
+    executeInstall(agent, activeSkillDir);
   });
 
+  cleanupTempDir(tempCleanDir);
   console.log('\n\x1b[32m[SUCCESS] Installation complete!\x1b[0m');
 })();
