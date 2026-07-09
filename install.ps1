@@ -10,7 +10,7 @@ Write-Host "========================================================" -Foregroun
 if ((Get-Command node -ErrorAction SilentlyContinue) -and (Get-Command npm -ErrorAction SilentlyContinue)) {
   Write-Host "Node.js detected. Launching NPM-based CLI installer..."
   npx github:andrian-syh/roblox-best-practices-skill @args
-  exit
+  return
 }
 
 Write-Host "Node.js/NPM not found. Running PowerShell fallback installer..." -ForegroundColor Yellow
@@ -36,7 +36,7 @@ try {
   $srcSkillDir = Join-Path $tempDir "roblox-best-practices"
   if (-not (Test-Path $srcSkillDir)) {
     Write-Host "[ERROR] Failed to locate roblox-best-practices directory in download." -ForegroundColor Red
-    exit 1
+    return
   }
 
   function Copy-SkillFolder($src, $dest) {
@@ -87,7 +87,7 @@ try {
 
   if ($choice -eq 'C') {
     Write-Host "Installation cancelled."
-    exit 0
+    return
   }
 
   # Local indices: even-numbered + local-only tools (21,22,23)
