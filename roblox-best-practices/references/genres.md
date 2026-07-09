@@ -22,7 +22,7 @@ Every rule in this skill applies to every genre — but each genre has a **domin
 - `UnreliableRemoteEvent` for tracers/VFX/footsteps; reliable remotes for damage events.
 - Anti-cheat sanity checks ([security-monetization.md](security-monetization.md)): speed/teleport deltas, fire-rate caps, ammo accounting — all server-side.
 - Character physics is client-owned by design; never trust reported positions for hit *validation*, only for display.
-- Fixed-rate combat logic (`RunService` Heartbeat with accumulated dt, or `BindToSimulation` where available) so higher-FPS clients gain no advantage.
+- Fixed-rate combat logic (`RunService` Heartbeat with accumulated dt; `BindToSimulation` only for synchronized physics/prediction code under `Workspace.UseFixedSimulation` — see [performance.md](performance.md)) so higher-FPS clients gain no advantage.
 
 ## Obby / Platformer
 

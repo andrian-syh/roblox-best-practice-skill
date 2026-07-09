@@ -13,28 +13,22 @@ Canonical, fully-annotated examples of the section layout. Copy the shape, not t
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
-local RunService = game:GetService("RunService")
 
 -- | Modules | --
--- Ordered: ServerScriptService -> ServerStorage -> ReplicatedStorage -> Workspace
+-- Ordered: ServerScriptService -> ServerStorage -> ReplicatedStorage -> Workspace -> script-relative
 local PlayerData = require(ServerStorage.Modules.PlayerData)
-local Config = require(ReplicatedStorage.Shared.Config)
-local Signal = require(ReplicatedStorage.Shared.Signal)
 
 -- | Objects | --
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local purchaseRemote = remotes:WaitForChild("Purchase") :: RemoteEvent
-local spawnPoints = workspace:WaitForChild("SpawnPoints")
 
 -- | Configuration | --
-local MAX_PURCHASES_PER_MINUTE = 10
-local RESPAWN_DELAY = 3
-local SAVE_INTERVAL = 120
+local MAX_PURCHASES_PER_WINDOW = 10
+local PURCHASE_WINDOW = 60
 
 -- | State Management | --
-local purchaseCounts: {[Player]: number} = {}
+local purchaseWindows: {[Player]: {count: number, windowStart: number}} = {}
 local playerConnections: {[Player]: {RBXScriptConnection}} = {}
-local isShuttingDown = false
 
 -- // FUNCTIONS // --
 
@@ -45,9 +39,14 @@ local isShuttingDown = false
 ]]
 local function onPurchaseRequest(player: Player, itemId: unknown)
 	if typeof(itemId) ~= "string" then return end
-	local count = purchaseCounts[player] or 0
-	if count >= MAX_PURCHASES_PER_MINUTE then return end
-	purchaseCounts[player] = count + 1
+	local now = os.clock()
+	local window = purchaseWindows[player]
+	if not window or now - window.windowStart > PURCHASE_WINDOW then
+		window = {count = 0, windowStart = now}
+		purchaseWindows[player] = window
+	end
+	if window.count >= MAX_PURCHASES_PER_WINDOW then return end
+	window.count += 1
 	-- ... server-side validation of price/ownership, then grant
 end
 
@@ -55,7 +54,6 @@ end
 	Prepares everything a newly joined player needs.
 ]]
 local function onPlayerAdded(player: Player)
-	purchaseCounts[player] = 0
 	playerConnections[player] = {}
 	PlayerData.Load(player)
 end
@@ -69,14 +67,13 @@ local function onPlayerRemoving(player: Player)
 		connection:Disconnect()
 	end
 	playerConnections[player] = nil
-	purchaseCounts[player] = nil
+	purchaseWindows[player] = nil
 end
 
 --[[
 	Finalizes pending state so the server can shut down safely.
 ]]
 local function onClose()
-	isShuttingDown = true
 	PlayerData.SaveAll()
 end
 
@@ -135,7 +132,7 @@ local function withRetry<T...>(fn: () -> T...): (boolean, T...)
 	for attempt = 1, MAX_RETRIES do
 		local results = table.pack(pcall(fn))
 		if results[1] then
-			return table.unpack(results) :: any
+			return table.unpack(results, 1, results.n) :: any
 		end
 		task.wait(RETRY_BASE_DELAY * 2 ^ (attempt - 1))
 	end
@@ -196,12 +193,6 @@ return PlayerData
 
 -- | Services | --
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-
--- | Modules | --
-local Config = require(ReplicatedStorage.Shared.Config)
 
 -- | Objects | --
 local player = Players.LocalPlayer
@@ -210,7 +201,7 @@ local hud = playerGui:WaitForChild("HUD")
 local coinLabel = hud:WaitForChild("CoinLabel") :: TextLabel
 
 -- | Configuration | --
-local COIN_TWEEN_INFO = TweenInfo.new(0.3, Enum.EasingStyle.Quad)
+local COIN_ATTRIBUTE = "Coins"
 
 -- | State Management | --
 local displayedCoins = 0
@@ -221,7 +212,7 @@ local displayedCoins = 0
 	Synchronizes the coin display with the player's current state.
 ]]
 local function updateCoinDisplay()
-	local coins = player:GetAttribute("Coins") or 0
+	local coins = player:GetAttribute(COIN_ATTRIBUTE) or 0
 	if coins == displayedCoins then return end
 	displayedCoins = coins
 	coinLabel.Text = tostring(coins)
@@ -229,7 +220,7 @@ end
 
 -- // INITIALIZATION // --
 
-player:GetAttributeChangedSignal("Coins"):Connect(updateCoinDisplay)
+player:GetAttributeChangedSignal(COIN_ATTRIBUTE):Connect(updateCoinDisplay)
 updateCoinDisplay()
 ```
 
@@ -238,3 +229,5 @@ updateCoinDisplay()
 - The ModuleScript's table (`local PlayerData = {}`) lives at the end of State Management; static data assigned to it (like `Defaults`) may be set in INITIALIZATION.
 - `table.pack`/`table.unpack` in `withRetry` is acceptable here because retries are rare-path; never do this in a hot loop.
 - The LocalScript reads state via Attributes rather than a RemoteEvent — prefer attribute/tag replication for simple state; reserve remotes for actions.
+- Every declared Service/Module/Object/constant in these templates is used — copy that discipline: declare only what the script actually needs.
+- Bare `WaitForChild` is fine for containers that always replicate (ReplicatedStorage, PlayerGui). For `workspace` descendants under StreamingEnabled, use a timeout or a CollectionService tag signal instead ([performance.md](performance.md)).

@@ -87,15 +87,16 @@ Also determine, once, whether the project uses community libraries that replace 
 
 When asked to *review or tidy existing code* (rather than write new code):
 
-- Violations of Non-Negotiable Runtime Rules and deprecated APIs → report as findings (and fix if asked).
-- Section-layout/naming deviations → *propose* restructuring, don't silently rewrite; the user decides.
+- Violations of Non-Negotiable Runtime Rules and deprecated APIs → report as findings (and fix if asked). Apply the rules *as scoped* — the exceptions written into them (periodic loops, cold-path allocations, small state snapshots) are not violations.
+- Section-layout/naming deviations and missing doc comments on trivial private functions → *propose* restructuring as minor suggestions, don't silently rewrite and don't report them as violations; the user decides.
 - Never reformat code unrelated to the request; consistency within the file beats consistency with this skill.
+- Before flagging an API as wrong/nonexistent, verify against the target environment (see Environment & Scale) — never flag from memory alone.
 
 ## Environment & Scale
 
 - **Detect the project environment first:** Studio-native (work through Studio/MCP tools; paths are Instance paths) vs Rojo/filesystem (work through files; requires may use path aliases and `src/` layout maps to services). Match how you read, write, and reference scripts accordingly.
-- **Verify newer APIs before use** (`BindToSimulation`, `UIShadow`, Input Action System, structured `LogService`, ...) — check they exist in the target environment (API dump, ReflectionService, docs, or a quick test) rather than assuming; fall back to the stable equivalent if absent.
-- **Scale the ceremony to the script.** Tiny scripts (< ~40 lines) may use just the three top-level headers with no subsections; only add level-2+ headers when a section has enough content to need them. Never emit empty placeholder headers.
+- **Verify newer APIs before use** (`BindToSimulation`, `UIShadow`, Input Action System, structured `LogService`, ...) — check they exist in the target environment rather than assuming; fall back to the stable equivalent if absent. **The official docs (create.roblox.com — Engine API Reference) are the primary authority**; the API dump/ReflectionService or a quick in-Studio test settle what the docs haven't caught up to. Roblox ships new APIs continuously — absence from your training knowledge is not evidence an API doesn't exist.
+- **Scale the ceremony to the script.** Tiny scripts (< ~40 lines) may use just the three top-level headers with no subsections; only add level-2+ headers when a section has enough content to need them. Never emit empty placeholder headers. **Pure data/type modules** (config tables, item catalogs, shared type definitions — no runtime logic) are exempt from the three-section layout entirely; group their contents however reads best.
 
 ## Script Section Layout (MANDATORY)
 
@@ -128,7 +129,7 @@ Subsections in this fixed order (omit any that are empty):
 | Subsection | Content |
 |---|---|
 | `-- \| Services \| --` | Roblox services via `game:GetService()`, one per line, only the ones actually used |
-| `-- \| Modules \| --` | `require()` calls, ordered by source location: **ServerScriptService → ServerStorage → ReplicatedStorage → Workspace** |
+| `-- \| Modules \| --` | `require()` calls, ordered by source location: **ServerScriptService → ServerStorage → ReplicatedStorage → Workspace**, then script-relative requires (`script.Parent.X`) last. A `Packages`/`ServerPackages` folder sorts as its containing service. Only locations the script can legally reach apply (client scripts skip server locations) |
 | `-- \| Objects \| --` | References to Instances (models, folders, remotes, UI). Optional — only if needed |
 | `-- \| Configuration \| --` | Constants and tunable values used across the script. `UPPER_SNAKE_CASE` |
 | `-- \| State Management \| --` | Mutable runtime state variables (counters, caches, flags, connection tables) |
@@ -180,7 +181,7 @@ Full annotated templates (Script, LocalScript, ModuleScript): see [references/te
 ## Language & Style Rules
 
 - Start every script with `--!strict` (or `--!nonstrict` only when strict is impractical). Type-annotate public function signatures, Configuration constants, and State tables.
-- **Naming:** `PascalCase` for services, module tables, and Instance references; `camelCase` for local variables and functions; `UPPER_SNAKE_CASE` for Configuration constants. Module public methods `PascalCase` (`Inventory.AddItem`), private functions `camelCase`.
+- **Naming:** `PascalCase` for services and required module tables; `camelCase` for local variables, functions, and Instance references (`purchaseRemote`, `coinLabel`); `UPPER_SNAKE_CASE` for Configuration constants. Module public methods `PascalCase` (`Inventory.AddItem`), private functions `camelCase`.
 - Always `game:GetService()` — never `game.Workspace`-style direct indexing (exception: `workspace` global is fine).
 - **Never use deprecated APIs:** `wait()`/`spawn()`/`delay()` → `task.wait()`/`task.spawn()`/`task.delay()`; `Instance.new(class, parent)` two-arg form → set properties first, parent last; `:connect()`/`:wait()` lowercase → `:Connect()`/`:Wait()`; `BodyVelocity`/`BodyGyro` → constraints (`LinearVelocity`, `AlignOrientation`).
 - Guard external/yielding calls (`DataStore`, `MarketplaceService`, `HttpService`, `TeleportService`) with `pcall` and a retry policy. Never let an unprotected yield crash a player flow.
@@ -192,10 +193,10 @@ Full annotated templates (Script, LocalScript, ModuleScript): see [references/te
 
 1. **Server is authoritative.** Never trust the client: validate every RemoteEvent/RemoteFunction argument on the server (type, range, ownership, rate). Client only renders and requests.
 2. **Clean up everything you create.** Store connections and disconnect them (or `Destroy()` the owning Instance — destroying disconnects its connections). Any `PlayerAdded` setup must have a `PlayerRemoving` teardown.
-3. **No per-frame garbage.** Don't allocate tables/closures/strings inside `RunService` loops; hoist them. Use `RunService.Heartbeat` for gameplay, `PreRender`/`RenderStepped` only for camera/visual work on the client.
-4. **Never poll — react.** Use events, `:GetPropertyChangedSignal()`, attribute-changed signals, or tag signals instead of `while task.wait() do` checks.
+3. **No avoidable per-frame garbage.** Don't allocate tables/closures/strings inside `RunService` loops when they can be hoisted; hoist them. Judge by the hot path's actual frequency — a closure in a once-per-round callback is fine; only flag allocations that recur per frame/per entity. Use `RunService.Heartbeat` for gameplay, `PreRender`/`RenderStepped` only for camera/visual work on the client.
+4. **Never poll for state — react.** Use events, `:GetPropertyChangedSignal()`, attribute-changed signals, or tag signals instead of `while task.wait() do` checks on a condition that has a signal. Genuinely *periodic* work (autosave interval, throttled AI scans, round timers) is legitimate on a timed loop — that's scheduling, not polling.
 5. **Save data safely.** `UpdateAsync` over `SetAsync`, exponential-backoff retry, save on `PlayerRemoving`, and flush in `game:BindToClose()` and `game.ServerRestartScheduled`.
-6. **Budget the network.** Batch remote traffic; use `UnreliableRemoteEvent` for high-frequency, loss-tolerant data (VFX, positions); send deltas, not whole states.
+6. **Budget the network.** Batch remote traffic; use `UnreliableRemoteEvent` for high-frequency, loss-tolerant data (VFX, positions); for large or frequently-updated state send deltas, not whole states (a small, infrequent snapshot is fine as-is).
 
 Details, patterns, and numbers: [references/performance.md](references/performance.md) (CPU, memory, network, instances) and [references/patterns.md](references/patterns.md) (data stores, remotes, cleanup, pooling).
 
@@ -206,9 +207,9 @@ Before finishing any Luau code, verify:
 - [ ] Supervision level respected (inline token > session declaration > Balanced); in Autonomous, all assumptions listed in the summary
 - [ ] Mode determined (default vs adaptive); in adaptive mode, the convention was confirmed by the user before coding (or reported, in Autonomous)
 - [ ] Community libraries identified (asked or detected); overlapping patterns deferred to them
-- [ ] Three top-level sections present and correctly ordered; correct header syntax at each level (or the confirmed adapted equivalent); ceremony scaled to script size, no empty headers
+- [ ] Three top-level sections present and correctly ordered (except exempt pure data/type modules); correct header syntax at each level (or the confirmed adapted equivalent); ceremony scaled to script size, no empty headers
 - [ ] In review mode: non-negotiables reported as findings, stylistic changes proposed not forced, unrelated code untouched
-- [ ] Services/Modules/Objects/Configuration/State ordered per spec; module requires ordered SSS → SS → RS → Workspace
+- [ ] Services/Modules/Objects/Configuration/State ordered per spec; module requires ordered SSS → SS → RS → Workspace → script-relative (only reachable locations count)
 - [ ] Every function has a `--[[ ... ]]` block doc comment in desc → params → returns order; the description is general/contract-level (no mention of the body's specific features or code) so it survives implementation changes
 - [ ] `--!strict` (or justified `--!nonstrict`); no deprecated APIs
 - [ ] All connections have an owner and a teardown path; no leaked Instances

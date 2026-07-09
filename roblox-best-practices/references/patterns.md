@@ -63,16 +63,16 @@ Minimal connection-bag pattern (use a maid/janitor/trove module if the project h
 local cleanupByPlayer: {[Player]: {() -> ()}} = {}
 
 -- Registers a cleanup task owned by the player
-local function addCleanup(player: Player, task: () -> ())
+local function addCleanup(player: Player, cleanupTask: () -> ())
 	local bag = cleanupByPlayer[player]
 	if not bag then bag = {}; cleanupByPlayer[player] = bag end
-	table.insert(bag, task)
+	table.insert(bag, cleanupTask)
 end
 
 -- Runs and clears all cleanup tasks for a leaving player
 local function onPlayerRemoving(player: Player)
-	for _, task in cleanupByPlayer[player] or {} do
-		task()
+	for _, cleanupTask in cleanupByPlayer[player] or {} do
+		cleanupTask()
 	end
 	cleanupByPlayer[player] = nil
 end
@@ -111,7 +111,7 @@ Pool anything spawned more than ~once per second. Always reset *all* mutated pro
 
 ## Input (client)
 
-- New projects: use the **Input Action System** (`InputAction`/`InputBinding`) rather than raw `UserInputService`; it handles rebinding and cross-device out of the box.
+- New projects: use the **Input Action System** (`InputAction`/`InputBinding`) rather than raw `UserInputService` — it handles rebinding and cross-device out of the box. Verify availability in the target environment first (SKILL.md → Environment & Scale); fall back to `ContextActionService` if absent.
 - Legacy projects: `ContextActionService` over raw `UserInputService.InputBegan` for gameplay actions — it stacks/unbinds cleanly with UI and tools.
 - Never read input on the server; the client sends validated *intents*.
 
@@ -119,7 +119,7 @@ Pool anything spawned more than ~once per second. Always reset *all* mutated pro
 
 | Anti-pattern | Replace with |
 |---|---|
-| `while task.wait() do` polling a condition | Event / `GetPropertyChangedSignal` / attribute signal |
+| `while task.wait() do` polling a condition that has a signal | Event / `GetPropertyChangedSignal` / attribute signal. (Timed loops for genuinely periodic work — round timers, autosave, throttled scans — are fine) |
 | `wait()`, `spawn()`, `delay()` | `task.wait()`, `task.spawn()`, `task.delay()` |
 | Logic in `Touched` without debounce | Debounce table keyed by character + cooldown |
 | `FindFirstChild` chains every frame | Resolve once in VARIABLES / on bind |

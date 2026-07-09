@@ -80,4 +80,4 @@ Character physics is client-owned; validate *outcomes*, not inputs:
 ## Logging & response
 
 - Log validation failures with context (player, action, args, rate) via structured logging ([performance.md](performance.md#measurement-never-optimize-blind)) or AnalyticsService custom events — you tune thresholds from data, not guesses.
-- `Players:BanAsync` with `ApplyDeviceBlock` for confirmed cheaters (alt-evasion resistance); reserve automated bans for high-confidence signals only.
+- `Players:BanAsync` for confirmed cheaters. Evasion-resistance knobs in the ban config: alt-account propagation is **on by default** (`ExcludeAltAccounts = true` to opt out); `ApplyDeviceBlock = true` additionally blocks the banned user's *device* from rejoining for 24 h (`UnbanAsync` overrides it); `ApplyToUniverse` controls universe-wide scope. Reserve automated bans for high-confidence signals only.

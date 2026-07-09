@@ -18,6 +18,8 @@ If an existing project convention *directly conflicts* with a non-negotiable rul
 
 ## Step 1 — Analyze the codebase
 
+**Check toolchain files first** (filesystem/Rojo projects) — they encode conventions more reliably than sampling and cost one read each: `stylua.toml` (formatting), `selene.toml`/`.luaurc` (lint rules, strictness, globals), `wally.toml`/`*.project.json` (dependencies — a definitive community-library list, better than scanning `require()`s), `aftman.toml`/`rokit.toml` (tooling). Whatever they mandate wins over impressions from sampled code. Studio-native projects have none of these — go straight to sampling.
+
 Sample representative scripts — not everything. Aim for 5–15 files covering: a server Script, a LocalScript, several ModuleScripts, and whatever framework entry points exist. For Roblox Studio MCP setups, use script search/read tools; for Rojo-style filesystem projects, use file search.
 
 Record for each dimension:
