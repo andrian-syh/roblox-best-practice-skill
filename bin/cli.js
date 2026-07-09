@@ -6,7 +6,6 @@ const os = require('os');
 const prompts = require('prompts');
 
 const srcSkillDir = path.join(__dirname, '../roblox-best-practices');
-const homeDir = os.homedir();
 const cwd = process.cwd();
 
 // Helper to copy file
@@ -40,186 +39,85 @@ function copyFolderRecursiveSync(src, dest) {
   }
 }
 
-const targets = {
-  claudeGlobal: {
-    name: 'Claude Code (Global)',
-    desc: 'Global skill for Claude Code (~/.claude/skills/)',
-    appRoot: path.join(homeDir, '.claude'),
-    dest: path.join(homeDir, '.claude/skills/roblox-best-practices')
-  },
-  claudeLocal: {
-    name: 'Claude Code (Local)',
-    desc: 'Project-specific skill for Claude Code (.claude/skills/)',
-    appRoot: path.join(cwd, '.claude'),
-    dest: path.join(cwd, '.claude/skills/roblox-best-practices')
-  },
-  codexGlobal: {
-    name: 'Codex CLI (Global)',
-    desc: 'Global skill for Codex CLI (~/.codex/skills/)',
-    appRoot: path.join(homeDir, '.codex'),
-    dest: path.join(homeDir, '.codex/skills/roblox-best-practices')
-  },
-  codexLocal: {
-    name: 'Codex CLI (Local)',
-    desc: 'Project-specific skill for Codex CLI (.codex/skills/)',
-    appRoot: path.join(cwd, '.codex'),
-    dest: path.join(cwd, '.codex/skills/roblox-best-practices')
-  },
-  geminiCliGlobal: {
-    name: 'Gemini CLI (Global)',
-    desc: 'Global skill for Gemini CLI (~/.gemini/skills/)',
-    appRoot: path.join(homeDir, '.gemini'),
-    dest: path.join(homeDir, '.gemini/skills/roblox-best-practices')
-  },
-  geminiCliLocal: {
-    name: 'Gemini CLI (Local)',
-    desc: 'Project-specific skill for Gemini CLI (.gemini/skills/)',
-    appRoot: path.join(cwd, '.gemini'),
-    dest: path.join(cwd, '.gemini/skills/roblox-best-practices')
-  },
-  antigravityGlobal: {
-    name: 'Antigravity / Gemini Agent IDE (Global)',
-    desc: 'Global skill for Antigravity (~/.gemini/config/skills/)',
-    appRoot: path.join(homeDir, '.gemini'),
-    dest: path.join(homeDir, '.gemini/config/skills/roblox-best-practices')
-  },
-  antigravityLocal: {
-    name: 'Antigravity / Gemini Agent IDE (Local)',
-    desc: 'Project-specific skill for Antigravity (.agents/skills/)',
-    appRoot: path.join(cwd, '.agents'),
-    dest: path.join(cwd, '.agents/skills/roblox-best-practices')
-  },
-  cursorGlobal: {
-    name: 'Cursor (Global)',
-    desc: 'Global skill for Cursor (~/.cursor/skills/)',
-    appRoot: path.join(homeDir, '.cursor'),
-    dest: path.join(homeDir, '.cursor/skills/roblox-best-practices')
-  },
-  cursorLocal: {
-    name: 'Cursor (Local)',
-    desc: 'Project-specific skill for Cursor (.cursor/skills/)',
-    appRoot: path.join(cwd, '.cursor'),
-    dest: path.join(cwd, '.cursor/skills/roblox-best-practices')
-  },
-  windsurfGlobal: {
-    name: 'Windsurf / Devin Desktop (Global)',
-    desc: 'Global skill for Windsurf / Devin Desktop (~/.codeium/windsurf/skills/)',
-    appRoot: path.join(homeDir, '.codeium'),
-    dest: path.join(homeDir, '.codeium/windsurf/skills/roblox-best-practices')
-  },
-  windsurfLocal: {
-    name: 'Windsurf / Devin Desktop (Local)',
-    desc: 'Project-specific skill for Windsurf / Devin Desktop (.windsurf/skills/)',
-    appRoot: path.join(cwd, '.windsurf'),
-    dest: path.join(cwd, '.windsurf/skills/roblox-best-practices')
-  },
-  clineGlobal: {
-    name: 'Cline (Global)',
-    desc: 'Global skill for Cline (~/.cline/skills/)',
-    appRoot: path.join(homeDir, '.cline'),
-    dest: path.join(homeDir, '.cline/skills/roblox-best-practices')
-  },
-  clineLocal: {
-    name: 'Cline (Local)',
-    desc: 'Project-specific skill for Cline (.cline/skills/)',
-    appRoot: path.join(cwd, '.cline'),
-    dest: path.join(cwd, '.cline/skills/roblox-best-practices')
-  },
-  rooGlobal: {
-    name: 'Roo Code (Global)',
-    desc: 'Global skill for Roo Code (~/.roo/skills/)',
-    appRoot: path.join(homeDir, '.roo'),
-    dest: path.join(homeDir, '.roo/skills/roblox-best-practices')
-  },
-  rooLocal: {
-    name: 'Roo Code (Local)',
-    desc: 'Project-specific skill for Roo Code (.roo/skills/)',
-    appRoot: path.join(cwd, '.roo'),
-    dest: path.join(cwd, '.roo/skills/roblox-best-practices')
-  },
-  kiloGlobal: {
-    name: 'Kilo Code (Global)',
-    desc: 'Global skill for Kilo Code (~/.kilo/skills/)',
-    appRoot: path.join(homeDir, '.kilo'),
-    dest: path.join(homeDir, '.kilo/skills/roblox-best-practices')
-  },
-  kiloLocal: {
-    name: 'Kilo Code (Local)',
-    desc: 'Project-specific skill for Kilo Code (.kilo/skills/)',
-    appRoot: path.join(cwd, '.kilo'),
-    dest: path.join(cwd, '.kilo/skills/roblox-best-practices')
-  },
-  traeGlobal: {
-    name: 'Trae AI (Global)',
-    desc: 'Global skill for Trae AI (~/.trae/skills/)',
-    appRoot: path.join(homeDir, '.trae'),
-    dest: path.join(homeDir, '.trae/skills/roblox-best-practices')
-  },
-  traeLocal: {
-    name: 'Trae AI (Local)',
-    desc: 'Project-specific skill for Trae AI (.trae/skills/)',
-    appRoot: path.join(cwd, '.trae'),
-    dest: path.join(cwd, '.trae/skills/roblox-best-practices')
-  },
-  augment: {
-    name: 'Augment Code (Local)',
-    desc: 'Project-specific skill for Augment Code (.augment/skills/)',
-    appRoot: path.join(cwd, '.augment'),
-    dest: path.join(cwd, '.augment/skills/roblox-best-practices')
-  },
-  zed: {
-    name: 'Zed Editor (Local)',
-    desc: 'Project-specific skill for Zed Editor (.zed/skills/)',
-    appRoot: path.join(cwd, '.zed'),
-    dest: path.join(cwd, '.zed/skills/roblox-best-practices')
-  },
-  amazonq: {
-    name: 'Amazon Q Developer (Local)',
-    desc: 'Project-specific skill for Amazon Q Developer (.amazonq/skills/)',
-    appRoot: path.join(cwd, '.amazonq'),
-    dest: path.join(cwd, '.amazonq/skills/roblox-best-practices')
-  },
-  opencodeGlobal: {
-    name: 'OpenCode (Global)',
-    desc: 'Global skill for OpenCode (~/.config/opencode/skills/)',
-    appRoot: path.join(homeDir, '.config/opencode'),
-    dest: path.join(homeDir, '.config/opencode/skills/roblox-best-practices')
-  },
-  opencodeLocal: {
-    name: 'OpenCode (Local)',
-    desc: 'Project-specific skill for OpenCode (.opencode/skills/)',
-    appRoot: path.join(cwd, '.opencode'),
-    dest: path.join(cwd, '.opencode/skills/roblox-best-practices')
-  },
-  openclaudeGlobal: {
-    name: 'OpenClaude (Global)',
-    desc: 'Global skill for OpenClaude (~/.openclaude/skills/)',
-    appRoot: path.join(homeDir, '.openclaude'),
-    dest: path.join(homeDir, '.openclaude/skills/roblox-best-practices')
-  },
-  openclaudeLocal: {
-    name: 'OpenClaude (Local)',
-    desc: 'Project-specific skill for OpenClaude (.openclaude/skills/)',
-    appRoot: path.join(cwd, '.openclaude'),
-    dest: path.join(cwd, '.openclaude/skills/roblox-best-practices')
-  }
-};
+const additionalAgents = [
+  { name: 'AiderDesk', path: '.aider-desk/skills' },
+  { name: 'AstrBot', path: 'data/skills' },
+  { name: 'Autohand Code CLI', path: '.autohand/skills' },
+  { name: 'Augment', path: '.augment/skills' },
+  { name: 'IBM Bob', path: '.bob/skills' },
+  { name: 'Claude Code', path: '.claude/skills' },
+  { name: 'OpenClaw', path: 'skills' },
+  { name: 'CodeArts Agent', path: '.codeartsdoer/skills' },
+  { name: 'CodeBuddy', path: '.codebuddy/skills' },
+  { name: 'Codemaker', path: '.codemaker/skills' },
+  { name: 'Code Studio', path: '.codestudio/skills' },
+  { name: 'Command Code', path: '.commandcode/skills' },
+  { name: 'Continue', path: '.continue/skills' },
+  { name: 'Cortex Code', path: '.cortex/skills' },
+  { name: 'Crush', path: '.crush/skills' },
+  { name: 'Cursor', path: '.cursor/skills' },
+  { name: 'DeepAgents', path: '.deepagents/skills' },
+  { name: 'Devin for Terminal', path: '.devin/skills' },
+  { name: 'Dexto', path: '.dexto/skills' },
+  { name: 'Droid', path: '.factory/skills' },
+  { name: 'Eve', path: '.eve/skills' },
+  { name: 'Firebender', path: '.firebender/skills' },
+  { name: 'ForgeCode', path: '.forge/skills' },
+  { name: 'Gemini CLI', path: '.gemini/skills' },
+  { name: 'GitHub Copilot', path: '.github/skills' },
+  { name: 'Goose', path: '.goose/skills' },
+  { name: 'Hermes Agent', path: '.hermes/skills' },
+  { name: 'inference.sh', path: '.inferencesh/skills' },
+  { name: 'Jazz', path: '.jazz/skills' },
+  { name: 'Junie', path: '.junie/skills' },
+  { name: 'iFlow CLI', path: '.iflow/skills' },
+  { name: 'Kilo Code', path: '.kilocode/skills' },
+  { name: 'Kiro CLI', path: '.kiro/skills' },
+  { name: 'Kode', path: '.kode/skills' },
+  { name: 'Lingma', path: '.lingma/skills' },
+  { name: 'Loaf', path: '.loaf/skills' },
+  { name: 'MCPJam', path: '.mcpjam/skills' },
+  { name: 'Mistral Vibe', path: '.vibe/skills' },
+  { name: 'Moxby', path: '.moxby/skills' },
+  { name: 'Mux', path: '.mux/skills' },
+  { name: 'OpenHands', path: '.openhands/skills' },
+  { name: 'Ona', path: '.ona/skills' },
+  { name: 'Pi', path: '.pi/skills' },
+  { name: 'Qoder', path: '.qoder/skills' },
+  { name: 'Qoder CN', path: '.qoder-cn/skills' },
+  { name: 'Qwen Code', path: '.qwen/skills' },
+  { name: 'Replit Agent', path: '.replit/skills' },
+  { name: 'Reasonix', path: '.reasonix/skills' },
+  { name: 'Rovodev', path: '.rovodev/skills' },
+  { name: 'Roo Code', path: '.roo/skills' },
+  { name: 'Tabnine CLI', path: '.tabnine/skills' },
+  { name: 'Terramind', path: '.terramind/skills' },
+  { name: 'TinyCloud', path: '.tinycloud/skills' },
+  { name: 'Trae AI', path: '.trae/skills' },
+  { name: 'Trae CN', path: '.trae-cn/skills' },
+  { name: 'Windsurf', path: '.windsurf/skills' },
+  { name: 'Zencoder', path: '.zencoder/skills' },
+  { name: 'Zenflow', path: '.zenflow/skills' },
+  { name: 'Neovate', path: '.neovate/skills' },
+  { name: 'Pochi', path: '.pochi/skills' },
+  { name: 'Promptscript', path: '.promptscript/skills' },
+  { name: 'Adal', path: '.adal/skills' }
+];
 
-const keys = Object.keys(targets);
-
-// Execute installation for a given target key
-function executeInstall(key) {
-  const target = targets[key];
-  console.log(`\n--- Installing \x1b[36m${target.name}\x1b[0m ---`);
+// Execute installation for a given target object
+function executeInstall(agent) {
+  const dest = path.join(cwd, agent.path, 'roblox-best-practices');
+  const parentDir = path.dirname(dest);
   
-  if (target.appRoot && !fs.existsSync(target.appRoot)) {
-    console.log(`\x1b[33m[SKIPPED]\x1b[0m App root directory not found: ${target.appRoot}`);
+  if (fs.existsSync(parentDir)) {
+    console.log(`\n--- Installing \x1b[36m${agent.name}\x1b[0m ---`);
+    copyFolderRecursiveSync(srcSkillDir, dest);
   } else {
-    copyFolderRecursiveSync(srcSkillDir, target.dest);
+    console.log(`\x1b[33m[SKIPPED]\x1b[0m ${agent.name} (parent directory ${path.relative(cwd, parentDir) || parentDir} not found)`);
   }
 }
 
-// Argument parsing
+// Argument parsing for automation/non-interactive
 const args = process.argv.slice(2);
 
 if (args.includes('--help') || args.includes('-h')) {
@@ -227,190 +125,84 @@ if (args.includes('--help') || args.includes('-h')) {
 Roblox Best Practices Skill Installer CLI
 
 Usage:
-  npx roblox-best-practices-skill [options]
+  npx github:andrian-syh/roblox-best-practices-skill [options]
 
 Options:
-  -a, --all                   Install for all supported local and global tools
-  -al, --all-local            Install for all local tools in the current project directory
-  -ag, --all-global           Install for all global user configurations
-  
-Specific Agent Options:
-  --claude-global, -clg       Claude Code (Global)
-  --claude-local, -cll        Claude Code (Local)
-  --codex-global, -cxg        Codex CLI (Global)
-  --codex-local, -cxl         Codex CLI (Local)
-  --gemini-global, -gmg       Gemini CLI (Global)
-  --gemini-local, -gml        Gemini CLI (Local)
-  --antigravity-global, -agg  Antigravity / Gemini Agent IDE (Global)
-  --antigravity-local, -agl   Antigravity / Gemini Agent IDE (Local)
-  --cursor-global, -crg       Cursor (Global)
-  --cursor-local, -crl        Cursor (Local)
-  --windsurf-global, -wsg     Windsurf / Devin Desktop (Global)
-  --windsurf-local, -wsl      Windsurf / Devin Desktop (Local)
-  --cline-global, -cng        Cline (Global)
-  --cline-local, -cnl         Cline (Local)
-  --roo-global, -rog          Roo Code (Global)
-  --roo-local, -rol           Roo Code (Local)
-  --kilo-global, -kg          Kilo Code (Global)
-  --kilo-local, -kl           Kilo Code (Local)
-  --trae-global, -trg         Trae AI (Global)
-  --trae-local, -trl          Trae AI (Local)
-  --augment, -aug             Augment Code (Local)
-  --zed, -zd                  Zed Editor (Local)
-  --amazonq, -aq              Amazon Q Developer (Local)
-  --opencode-global, -opg     OpenCode (Global)
-  --opencode-local, -opl      OpenCode (Local)
-  --openclaude-global, -ocg   OpenClaude (Global)
-  --openclaude-local, -ocl    OpenClaude (Local)
+  -a, --all                   Install for all supported additional agents
+  -h, --help                  Show this help message
   `);
   process.exit(0);
 }
 
-// Map flags to targets
-const argMap = {
-  '--claude-global': ['claudeGlobal'], '-clg': ['claudeGlobal'],
-  '--claude-local': ['claudeLocal'], '-cll': ['claudeLocal'],
-  '--codex-global': ['codexGlobal'], '-cxg': ['codexGlobal'],
-  '--codex-local': ['codexLocal'], '-cxl': ['codexLocal'],
-  '--gemini-global': ['geminiCliGlobal'], '-gmg': ['geminiCliGlobal'],
-  '--gemini-local': ['geminiCliLocal'], '-gml': ['geminiCliLocal'],
-  '--antigravity-global': ['antigravityGlobal'], '-agg': ['antigravityGlobal'],
-  '--antigravity-local': ['antigravityLocal'], '-agl': ['antigravityLocal'],
-  '--cursor-global': ['cursorGlobal'], '-crg': ['cursorGlobal'],
-  '--cursor-local': ['cursorLocal'], '-crl': ['cursorLocal'],
-  '--windsurf-global': ['windsurfGlobal'], '-wsg': ['windsurfGlobal'],
-  '--windsurf-local': ['windsurfLocal'], '-wsl': ['windsurfLocal'],
-  '--cline-global': ['clineGlobal'], '-cng': ['clineGlobal'],
-  '--cline-local': ['clineLocal'], '-cnl': ['clineLocal'],
-  '--roo-global': ['rooGlobal'], '-rog': ['rooGlobal'],
-  '--roo-local': ['rooLocal'], '-rol': ['rooLocal'],
-  '--kilo-global': ['kiloGlobal'], '-kg': ['kiloGlobal'],
-  '--kilo-local': ['kiloLocal'], '-kl': ['kiloLocal'],
-  '--trae-global': ['traeGlobal'], '-trg': ['traeGlobal'],
-  '--trae-local': ['traeLocal'], '-trl': ['traeLocal'],
-  '--augment': ['augment'], '-aug': ['augment'],
-  '--zed': ['zed'], '-zd': ['zed'],
-  '--amazonq': ['amazonq'], '-aq': ['amazonq'],
-  '--opencode-global': ['opencodeGlobal'], '-opg': ['opencodeGlobal'],
-  '--opencode-local': ['opencodeLocal'], '-opl': ['opencodeLocal'],
-  '--openclaude-global': ['openclaudeGlobal'], '-ocg': ['openclaudeGlobal'],
-  '--openclaude-local': ['openclaudeLocal'], '-ocl': ['openclaudeLocal'],
-  '--all': keys, '-a': keys,
-  '--all-local': keys.filter(k => !k.endsWith('Global')), '-al': keys.filter(k => !k.endsWith('Global')),
-  '--all-global': keys.filter(k => k.endsWith('Global')), '-ag': keys.filter(k => k.endsWith('Global'))
-};
-
-let selectedTargets = [];
-for (const arg of args) {
-  if (argMap[arg]) {
-    selectedTargets.push(...argMap[arg]);
-  }
-}
-// Remove duplicates
-selectedTargets = [...new Set(selectedTargets)];
-
-if (selectedTargets.length > 0) {
-  console.log(`Installing for ${selectedTargets.length} target(s)...`);
-  selectedTargets.forEach(key => {
-    executeInstall(key);
+if (args.includes('--all') || args.includes('-a')) {
+  console.log('Installing to Universal and all selected additional agents...');
+  // Universal
+  console.log(`\n--- Installing \x1b[36mUniversal (.agents/skills)\x1b[0m ---`);
+  copyFolderRecursiveSync(srcSkillDir, path.join(cwd, '.agents/skills/roblox-best-practices'));
+  
+  // All additional
+  additionalAgents.forEach(agent => {
+    executeInstall(agent);
   });
   console.log('\n\x1b[32m[SUCCESS] Installation complete!\x1b[0m');
   process.exit(0);
 }
 
-// Interactive prompt using prompts library
+// Interactive prompt
 (async () => {
   console.log('\x1b[36m========================================================\x1b[0m');
   console.log('\x1b[36m       Roblox Best Practices Skill Installer CLI        \x1b[0m');
   console.log('\x1b[36m========================================================\x1b[0m\n');
 
-  const modeResponse = await prompts({
-    type: 'select',
-    name: 'mode',
-    message: 'Welcome! How would you like to install the Roblox Best Practices skill?',
-    choices: [
-      { title: '>> Smart Install (Auto-detect tools & install)', value: 'smart', description: 'Automatically detects which AI tools you have and configures them' },
-      { title: '-> Local Project (Specific tools for this folder)', value: 'local', description: 'Manually select local project tools to configure' },
-      { title: '=> Global User (Specific tools globally)', value: 'global', description: 'Manually select global tools to configure' },
-      { title: '== Manual Selection (Show ALL tools)', value: 'all', description: 'Manually select from the full list of both local and global tools' },
-      { title: ' x Cancel', value: 'cancel' }
-    ]
+  console.log(`\x1b[32m•\x1b[0m ${additionalAgents.length + 9} agents`);
+  console.log('\x1b[32m•\x1b[0m Which agents do you want to install to?\n');
+  console.log('  \x1b[90m— Universal (.agents/skills) — always included —————\x1b[0m');
+  console.log('    \x1b[32m•\x1b[0m Amp');
+  console.log('    \x1b[32m•\x1b[0m Antigravity');
+  console.log('    \x1b[32m•\x1b[0m Antigravity CLI');
+  console.log('    \x1b[32m•\x1b[0m Cline');
+  console.log('    \x1b[32m•\x1b[0m Codex');
+  console.log('    \x1b[32m•\x1b[0m Kimi Code CLI');
+  console.log('    \x1b[32m•\x1b[0m OpenCode');
+  console.log('    \x1b[32m•\x1b[0m Warp');
+  console.log('    \x1b[32m•\x1b[0m Zed');
+  console.log('    \x1b[90m...and 4 more\x1b[0m\n');
+
+  const choices = additionalAgents.map(agent => {
+    const parentPath = path.dirname(path.join(cwd, agent.path));
+    const exists = fs.existsSync(parentPath);
+    return {
+      title: `${agent.name} (${agent.path})`,
+      value: agent,
+      selected: exists
+    };
   });
 
-  if (!modeResponse.mode || modeResponse.mode === 'cancel') {
+  const response = await prompts({
+    type: 'autocompleteMultiselect',
+    name: 'selected',
+    message: '— Additional agents —',
+    choices: choices,
+    hint: '- Type to search, Space to select, Enter to confirm',
+    instructions: false
+  });
+
+  if (response.selected === undefined) {
     console.log('\n\x1b[31m[CANCELLED] Installation cancelled.\x1b[0m');
     process.exit(0);
   }
 
-  let keysToInstall = [];
+  const selectedAgents = response.selected || [];
 
-  if (modeResponse.mode === 'smart') {
-    // Auto-detect available tools
-    const availableKeys = keys.filter(k => {
-      const target = targets[k];
-      return target.appRoot && fs.existsSync(target.appRoot);
-    });
-    
-    if (availableKeys.length === 0) {
-       console.log('\n\x1b[33m[INFO] No supported AI tools detected on your system. Try manual Local/Global install.\x1b[0m');
-       process.exit(0);
-    }
-    
-    console.log(`\n\x1b[32m>> Smart Install: Detected ${availableKeys.length} tool(s).\x1b[0m`);
-    keysToInstall = availableKeys;
+  console.log(`\n\x1b[32mInstalling skill...\x1b[0m`);
+  
+  // 1. Always install to Universal
+  console.log(`\n--- Installing \x1b[36mUniversal (.agents/skills)\x1b[0m ---`);
+  copyFolderRecursiveSync(srcSkillDir, path.join(cwd, '.agents/skills/roblox-best-practices'));
 
-  } else {
-    // Manual Selection (Local, Global, or All)
-    const isGlobal = modeResponse.mode === 'global';
-    const isLocal = modeResponse.mode === 'local';
-    
-    let filteredKeys = keys;
-    if (isGlobal) filteredKeys = keys.filter(k => k.endsWith('Global'));
-    if (isLocal) filteredKeys = keys.filter(k => !k.endsWith('Global'));
-    
-    const choices = filteredKeys.map(key => ({
-      title: targets[key].name,
-      description: targets[key].desc,
-      value: key
-    }));
-    
-    let allMacroTitle = 'ALL';
-    if (isGlobal) allMacroTitle = 'GLOBAL';
-    if (isLocal) allMacroTitle = 'LOCAL';
-
-    choices.unshift({ 
-      title: `\x1b[33m--- Select All ${allMacroTitle} Tools ---\x1b[0m`, 
-      value: 'ALL', 
-      description: `Selects all options below` 
-    });
-
-    const response = await prompts({
-      type: 'multiselect',
-      name: 'selected',
-      message: `Select the ${isGlobal ? 'Global' : 'Local'} tools to configure:`,
-      choices: choices,
-      instructions: false,
-      hint: '- Space to select. Return to submit',
-      min: 1
-    });
-
-    if (!response.selected || response.selected.length === 0) {
-      console.log('\n\x1b[31m[CANCELLED] No targets selected.\x1b[0m');
-      process.exit(0);
-    }
-    
-    keysToInstall = response.selected;
-    if (keysToInstall.includes('ALL')) {
-      keysToInstall = filteredKeys;
-    }
-    
-    // Remove the 'ALL' macro if it's there but they also selected specific ones
-    keysToInstall = keysToInstall.filter(k => k !== 'ALL');
-  }
-
-  console.log(`\n\x1b[32mInstalling for ${keysToInstall.length} target(s)...\x1b[0m`);
-  keysToInstall.forEach(key => {
-    executeInstall(key);
+  // 2. Install to selected additional agents (only if parent dir exists)
+  selectedAgents.forEach(agent => {
+    executeInstall(agent);
   });
 
   console.log('\n\x1b[32m[SUCCESS] Installation complete!\x1b[0m');

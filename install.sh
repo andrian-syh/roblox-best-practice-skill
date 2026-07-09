@@ -74,95 +74,69 @@ copy_folder() {
 
 install_targets() {
   echo ""
-  echo "Where would you like to install the skill?"
-  echo " 1) Claude Code (Global)                      -> ~/.claude/skills/"
-  echo " 2) Claude Code (Local)                       -> ./.claude/skills/"
-  echo " 3) Codex CLI (Global)                        -> ~/.codex/skills/"
-  echo " 4) Codex CLI (Local)                         -> ./.codex/skills/"
-  echo " 5) Gemini CLI (Global)                       -> ~/.gemini/skills/"
-  echo " 6) Gemini CLI (Local)                        -> ./.gemini/skills/"
-  echo " 7) Antigravity / Gemini Agent IDE (Global)   -> ~/.gemini/config/skills/"
-  echo " 8) Antigravity / Gemini Agent IDE (Local)    -> ./.agents/skills/"
-  echo " 9) Cursor (Global)                           -> ~/.cursor/skills/"
-  echo "10) Cursor (Local)                            -> ./.cursor/skills/"
-  echo "11) Windsurf / Devin Desktop (Global)         -> ~/.codeium/windsurf/skills/"
-  echo "12) Windsurf / Devin Desktop (Local)          -> ./.windsurf/skills/"
-  echo "13) Cline (Global)                            -> ~/.cline/skills/"
-  echo "14) Cline (Local)                             -> ./.cline/skills/"
-  echo "15) Roo Code (Global)                         -> ~/.roo/skills/"
-  echo "16) Roo Code (Local)                          -> ./.roo/skills/"
-  echo "17) Kilo Code (Global)                        -> ~/.kilo/skills/"
-  echo "18) Kilo Code (Local)                         -> ./.kilo/skills/"
-  echo "19) Trae AI (Global)                          -> ~/.trae/skills/"
-  echo "20) Trae AI (Local)                           -> ./.trae/skills/"
-  echo "21) Augment Code (Local)                      -> ./.augment/skills/"
-  echo "22) Zed Editor (Local)                        -> ./.zed/skills/"
-  echo "23) Amazon Q Developer (Local)                -> ./.amazonq/skills/"
-  echo "24) OpenCode (Global)                         -> ~/.config/opencode/skills/"
-  echo "25) OpenCode (Local)                          -> ./.opencode/skills/"
-  echo "26) OpenClaude (Global)                       -> ~/.openclaude/skills/"
-  echo "27) OpenClaude (Local)                        -> ./.openclaude/skills/"
-  echo " L) All LOCAL targets"
-  echo " G) All GLOBAL targets"
-  echo " A) ALL targets"
-  echo " C) Cancel"
+  echo "  ${GREEN}•${NC} 72 agents"
+  echo "  ${GREEN}•${NC} Which agents do you want to install to?"
+  echo ""
+  echo "  ${YELLOW}— Universal (.agents/skills) — always included —————${NC}"
+  echo "    ${GREEN}•${NC} Amp, Antigravity, Antigravity CLI, Cline, Codex, Kimi Code CLI, OpenCode, Warp, Zed"
+  echo ""
+
+  echo "Installing to Universal (.agents/skills)..."
+  copy_folder "$SRC_SKILL_DIR" "./.agents/skills/roblox-best-practices"
+
+  local detected_names=""
+  local detected_paths=""
+  local count=0
   
-  printf "Select option(s) (space-separated, e.g. 1 3 5 or A/G/L/C): "
-  read -r CHOICE
-  
-  # Normalize to uppercase
-  CHOICE=$(echo "$CHOICE" | tr '[:lower:]' '[:upper:]')
-  
-  case "$CHOICE" in
-    C)
-      echo "Installation cancelled."
-      exit 0
-      ;;
-    A)
-      CHOICE="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27"
-      ;;
-    L)
-      CHOICE="2 4 6 8 10 12 14 16 18 20 21 22 23 25 27"
-      ;;
-    G)
-      CHOICE="1 3 5 7 9 11 13 15 17 19 24 26"
-      ;;
-  esac
-  
-  for opt in $CHOICE; do
-    case "$opt" in
-      1)  copy_folder "$SRC_SKILL_DIR" "$HOME/.claude/skills/roblox-best-practices" ;;
-      2)  copy_folder "$SRC_SKILL_DIR" "./.claude/skills/roblox-best-practices" ;;
-      3)  copy_folder "$SRC_SKILL_DIR" "$HOME/.codex/skills/roblox-best-practices" ;;
-      4)  copy_folder "$SRC_SKILL_DIR" "./.codex/skills/roblox-best-practices" ;;
-      5)  copy_folder "$SRC_SKILL_DIR" "$HOME/.gemini/skills/roblox-best-practices" ;;
-      6)  copy_folder "$SRC_SKILL_DIR" "./.gemini/skills/roblox-best-practices" ;;
-      7)  copy_folder "$SRC_SKILL_DIR" "$HOME/.gemini/config/skills/roblox-best-practices" ;;
-      8)  copy_folder "$SRC_SKILL_DIR" "./.agents/skills/roblox-best-practices" ;;
-      9)  copy_folder "$SRC_SKILL_DIR" "$HOME/.cursor/skills/roblox-best-practices" ;;
-      10) copy_folder "$SRC_SKILL_DIR" "./.cursor/skills/roblox-best-practices" ;;
-      11) copy_folder "$SRC_SKILL_DIR" "$HOME/.codeium/windsurf/skills/roblox-best-practices" ;;
-      12) copy_folder "$SRC_SKILL_DIR" "./.windsurf/skills/roblox-best-practices" ;;
-      13) copy_folder "$SRC_SKILL_DIR" "$HOME/.cline/skills/roblox-best-practices" ;;
-      14) copy_folder "$SRC_SKILL_DIR" "./.cline/skills/roblox-best-practices" ;;
-      15) copy_folder "$SRC_SKILL_DIR" "$HOME/.roo/skills/roblox-best-practices" ;;
-      16) copy_folder "$SRC_SKILL_DIR" "./.roo/skills/roblox-best-practices" ;;
-      17) copy_folder "$SRC_SKILL_DIR" "$HOME/.kilo/skills/roblox-best-practices" ;;
-      18) copy_folder "$SRC_SKILL_DIR" "./.kilo/skills/roblox-best-practices" ;;
-      19) copy_folder "$SRC_SKILL_DIR" "$HOME/.trae/skills/roblox-best-practices" ;;
-      20) copy_folder "$SRC_SKILL_DIR" "./.trae/skills/roblox-best-practices" ;;
-      21) copy_folder "$SRC_SKILL_DIR" "./.augment/skills/roblox-best-practices" ;;
-      22) copy_folder "$SRC_SKILL_DIR" "./.zed/skills/roblox-best-practices" ;;
-      23) copy_folder "$SRC_SKILL_DIR" "./.amazonq/skills/roblox-best-practices" ;;
-      24) copy_folder "$SRC_SKILL_DIR" "$HOME/.config/opencode/skills/roblox-best-practices" ;;
-      25) copy_folder "$SRC_SKILL_DIR" "./.opencode/skills/roblox-best-practices" ;;
-      26) copy_folder "$SRC_SKILL_DIR" "$HOME/.openclaude/skills/roblox-best-practices" ;;
-      27) copy_folder "$SRC_SKILL_DIR" "./.openclaude/skills/roblox-best-practices" ;;
-      *)  echo "${RED}Invalid option: $opt${NC}" ;;
-    esac
-  done
-  
-  echo "\n${GREEN}[SUCCESS] Installation complete!${NC}"
+  check_agent() {
+    local name="$1"
+    local path="$2"
+    local parent="$3"
+    if [ -d "$parent" ]; then
+      count=$((count+1))
+      detected_names="$detected_names\n  $count) [x] $name ($path)"
+      detected_paths="$detected_paths $path"
+    fi
+  }
+
+  check_agent "AiderDesk" ".aider-desk/skills" ".aider-desk"
+  check_agent "AstrBot" "data/skills" "data"
+  check_agent "Augment" ".augment/skills" ".augment"
+  check_agent "IBM Bob" ".bob/skills" ".bob"
+  check_agent "Claude Code" ".claude/skills" ".claude"
+  check_agent "Cursor" ".cursor/skills" ".cursor"
+  check_agent "Windsurf" ".windsurf/skills" ".windsurf"
+  check_agent "Cline" ".cline/skills" ".cline"
+  check_agent "Roo Code" ".roo/skills" ".roo"
+  check_agent "Kilo Code" ".kilocode/skills" ".kilocode"
+  check_agent "Trae AI" ".trae/skills" ".trae"
+  check_agent "Zed Editor" ".zed/skills" ".zed"
+  check_agent "Amazon Q" ".amazonq/skills" ".amazonq"
+  check_agent "OpenCode" ".opencode/skills" ".opencode"
+  check_agent "OpenClaude" ".openclaude/skills" ".openclaude"
+
+  if [ $count -gt 0 ]; then
+    echo ""
+    echo "Detected existing agent directories in your project:"
+    printf "$detected_names\n"
+    echo ""
+    printf "Do you want to install the skill to these detected agents? (Y/n): "
+    read -r CONFIRM
+    CONFIRM=$(echo "$CONFIRM" | tr '[:lower:]' '[:upper:]')
+    if [ "$CONFIRM" = "" ] || [ "$CONFIRM" = "Y" ]; then
+      for path in $detected_paths; do
+        echo ""
+        echo "Installing to $path/roblox-best-practices..."
+        copy_folder "$SRC_SKILL_DIR" "./$path/roblox-best-practices"
+      done
+    fi
+  else
+    echo ""
+    echo "No other agent directories detected in this folder. Skip additional agents."
+  fi
+
+  echo ""
+  echo "${GREEN}[SUCCESS] Installation complete!${NC}"
 }
 
 install_targets
