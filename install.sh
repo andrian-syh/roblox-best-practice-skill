@@ -14,10 +14,15 @@ echo "${BLUE}========================================================${NC}"
 echo "${BLUE}       Roblox Best Practices Skill Installer            ${NC}"
 echo "${BLUE}========================================================${NC}"
 
-# Check if Node.js/npm is available
 if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
   echo "Node.js detected. Launching NPM-based CLI installer..."
-  npx github:andrian-syh/roblox-best-practices-skill "$@"
+  NPM_VERSION=$(npm --version 2>/dev/null || echo "0")
+  NPM_MAJOR=$(echo "$NPM_VERSION" | cut -d. -f1)
+  if [ -n "$NPM_MAJOR" ] && [ "$NPM_MAJOR" -ge 12 ]; then
+    npx --allow-git=all github:andrian-syh/roblox-best-practices-skill "$@"
+  else
+    npx github:andrian-syh/roblox-best-practices-skill "$@"
+  fi
   exit 0
 fi
 

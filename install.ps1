@@ -9,7 +9,12 @@ Write-Host "========================================================" -Foregroun
 # Check if Node.js/npm is available, prefer npx-based CLI
 if ((Get-Command node -ErrorAction SilentlyContinue) -and (Get-Command npm -ErrorAction SilentlyContinue)) {
   Write-Host "Node.js detected. Launching NPM-based CLI installer..." -ForegroundColor Green
-  & npx github:andrian-syh/roblox-best-practices-skill $args
+  $npmVer = (npm --version) -split '\.'
+  if ([int]$npmVer[0] -ge 12) {
+    & npx --allow-git=all github:andrian-syh/roblox-best-practices-skill $args
+  } else {
+    & npx github:andrian-syh/roblox-best-practices-skill $args
+  }
   return
 }
 
@@ -79,8 +84,8 @@ try {
 
   Write-Host ""
   Write-Host "  Which agents do you want to install to?" -ForegroundColor Green
-  Write-Host "  — Universal (.agents/skills) — always included —————" -ForegroundColor DarkGray
-  Write-Host "    • Amp, Antigravity, Antigravity CLI, Cline, Codex, Kimi Code CLI, OpenCode, Warp, Zed" -ForegroundColor Green
+  Write-Host "  --- Universal (.agents/skills) -- always included -------" -ForegroundColor DarkGray
+  Write-Host "    * Amp, Antigravity, Antigravity CLI, Cline, Codex, Kimi Code CLI, OpenCode, Warp, Zed" -ForegroundColor Green
   Write-Host ""
 
   # Always copy to Universal
@@ -91,15 +96,20 @@ try {
       Write-Host ""
       Write-Host "Detected existing agent directories in your project:" -ForegroundColor Yellow
       for ($i = 0; $i -lt $detectedAgents.Count; $i++) {
-          Write-Host "  $($i + 1)) [x] $($detectedAgents[$i].Name) ($($detectedAgents[$i].Path))" -ForegroundColor Cyan
+          $idx = $i + 1
+          $agentName = $detectedAgents[$i].Name
+          $agentPath = $detectedAgents[$i].Path
+          Write-Host ("  {0}) [x] {1} ({2})" -f $idx, $agentName, $agentPath) -ForegroundColor Cyan
       }
       Write-Host ""
       $confirm = Read-Host "Do you want to install the skill to these detected agents? (Y/n)"
       if ($confirm -eq "" -or $confirm.ToUpper() -eq "Y") {
           foreach ($agent in $detectedAgents) {
+              $agentName = $agent.Name
+              $agentPath = $agent.Path
               Write-Host ""
-              Write-Host "Installing to $($agent.Name)..." -ForegroundColor Cyan
-              Copy-SkillFolder $srcSkillDir (Join-Path "." ($agent.Path + "/roblox-best-practices"))
+              Write-Host ("Installing to {0}..." -f $agentName) -ForegroundColor Cyan
+              Copy-SkillFolder $srcSkillDir (Join-Path "." ($agentPath + "/roblox-best-practices"))
           }
       }
   } else {
