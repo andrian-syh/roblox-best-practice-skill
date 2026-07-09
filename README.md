@@ -6,7 +6,7 @@ A framework-agnostic coding standards and best practices skill for Roblox and Lu
 
 ## Installation
 
-This repository includes a multi-agent installer that automatically configures this skill for your preferred AI editor, CLI, or extension. You can install this skill globally or locally for your project using one of the following methods.
+This repository includes a smart, interactive installer that automatically configures this skill for your preferred AI editors and agents. 
 
 ### Method 1: Using `npx` (Node.js Required - Recommended)
 
@@ -16,22 +16,17 @@ Run the interactive installer directly in your terminal:
 npx github:andrian-syh/roblox-best-practices-skill
 ```
 
-#### CLI Flags (Non-Interactive)
+#### CLI Options & Flags
 
-You can pass flags to automate the installation:
+You can pass flags to automate or customize the installation:
 
-- **All Local Tools**: `--all-local` (or `-al`)
-- **All Global Configs**: `--all-global` (or `-ag`)
-- **All Supported Tools**: `--all` (or `-a`)
-- **Specific Tools**:
-  - `--claude-local` (Claude Code local)
-  - `--cursor-local` (Cursor local)
-  - `--codex-local` (Codex CLI local)
-  - *(Run `npx github:andrian-syh/roblox-best-practices-skill --help` to see all specific flags)*
+- **All Agents**: `--all` (or `-a`) - Installs the skill for the Universal path and all supported additional agents.
+- **Specific Version Tag**: `--tag <tag_name>` (or `-t <tag_name>`) - Target a specific version tag from GitHub (e.g., `v1.0.0`, `v1.1.7`).
+- **Help**: `--help` (or `-h`) - Show CLI help message.
 
 ---
 
-### Method 2: Shell/Terminal One-Liner (macOS & Linux)
+### Method 2: Shell/Terminal One-Liner (macOS & Linux Fallback)
 
 Runs the installer directly from GitHub (runs via `npx` if Node is installed, otherwise falls back to a POSIX shell menu):
 
@@ -41,9 +36,9 @@ curl -fsSL https://raw.githubusercontent.com/andrian-syh/roblox-best-practices-s
 
 ---
 
-### Method 3: PowerShell One-Liner (Windows)
+### Method 3: PowerShell One-Liner (Windows Fallback)
 
-Runs the installer directly from GitHub (runs via `npx` if Node is installed, otherwise falls back to a PowerShell menu):
+Runs the installer directly from GitHub (runs via `npx` if Node is installed, otherwise falls back to an interactive PowerShell menu):
 
 ```powershell
 irm https://raw.githubusercontent.com/andrian-syh/roblox-best-practices-skill/main/install.ps1 | iex
@@ -51,27 +46,33 @@ irm https://raw.githubusercontent.com/andrian-syh/roblox-best-practices-skill/ma
 
 ---
 
+## How It Works
+
+1. **Version Selection**: The installer dynamically fetches available tags from GitHub (e.g., `v1.1.7`, `v1.0.0`). You can choose to install the latest bundled version instantly or download an older version from GitHub.
+2. **Universal Destination**: The skill is always installed to `./.agents/skills/roblox-best-practices/` (Universal workspace customizations). This automatically makes it available to compatible agents such as **Antigravity**, **Cline**, **Codex**, **Warp**, **Zed**, **Amp**, **Kimi Code CLI**, **OpenCode**, and others.
+3. **Additional Agent Folders**:
+   - The installer displays a list of 72 additional supported agents.
+   - It scans your workspace root directory for existing configuration folders of these agents (like `.cursor/`, `.claude/`, `.windsurf/`, `.roo/`, etc.).
+   - If found, it **pre-selects** them in the menu.
+   - You can type to **search and filter** the list in real-time.
+   - The skill will be copied to the selected folders only if their parent folder exists, keeping your workspace neat.
+
+---
+
 ## Supported AI Tools & Agents
 
-| Tool / Agent | Global Configuration Path | Local Configuration Path |
-|--------------|---------------------------|--------------------------|
-| **Claude Code** | `~/.claude/skills/` | `.claude/skills/` |
-| **Codex CLI** | `~/.codex/skills/` | `.codex/skills/` |
-| **Gemini CLI** | `~/.gemini/skills/` | `.gemini/skills/` |
-| **Antigravity / Gemini Agent IDE** | `~/.gemini/config/skills/` | `.agents/skills/` |
-| **Cursor** | `~/.cursor/skills/` | `.cursor/skills/` |
-| **Windsurf / Devin Desktop** | `~/.codeium/windsurf/skills/` | `.windsurf/skills/` |
-| **Cline** | `~/.cline/skills/` | `.cline/skills/` |
-| **Roo Code** | `~/.roo/skills/` | `.roo/skills/` |
-| **Kilo Code** | `~/.kilo/skills/` | `.kilo/skills/` |
-| **Trae AI** | `~/.trae/skills/` | `.trae/skills/` |
-| **Augment Code** | *(N/A)* | `.augment/skills/` |
-| **Zed Editor** | `~/.config/zed/` | `.zed/skills/` |
-| **Amazon Q Developer** | *(N/A)* | `.amazonq/skills/` |
-| **OpenCode** | `~/.config/opencode/skills/` | `.opencode/skills/` |
-| **OpenClaude** | `~/.openclaude/skills/` | `.openclaude/skills/` |
-
-> **Note**: Any other AI coding agent or tool that supports the open Agent Skills standard (`SKILL.md`) should also be able to use this skill seamlessly by placing the skill folder in its designated skills directory.
+| Path Category | Target Directory | Compatible Tools / Agents |
+|---|---|---|
+| **Universal** (Always Included) | `./.agents/skills/` | Antigravity, Amp, Cline, Codex, Kimi Code CLI, OpenCode, Warp, Zed, and others |
+| **Additional (Local)** | `./.claude/skills/` | Claude Code |
+| **Additional (Local)** | `./.cursor/skills/` | Cursor |
+| **Additional (Local)** | `./.windsurf/skills/` | Windsurf / Cascade |
+| **Additional (Local)** | `./.roo/skills/` | Roo Code |
+| **Additional (Local)** | `./.cline/skills/` | Cline |
+| **Additional (Local)** | `./.trae/skills/` | Trae AI |
+| **Additional (Local)** | `./.aider-desk/skills/` | AiderDesk |
+| **Additional (Local)** | `./data/skills/` | AstrBot |
+| **Additional (Local)** | *(and 60+ others)* | Complete set of 72 agents supported |
 
 ---
 
