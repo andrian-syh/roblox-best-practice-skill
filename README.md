@@ -6,29 +6,21 @@ A framework-agnostic coding standards and best practices skill for Roblox and Lu
 
 ## Installation
 
-This repository includes a smart, interactive installer that automatically configures this skill for your preferred AI editors and agents. 
+This repository includes a smart installer script that automatically configures this skill for your preferred AI editors and agents, bypassing potential npm version security issues.
 
-### Method 1: Using `npx` (Node.js Required - Recommended)
+### Method 1: PowerShell One-Liner (Windows - Recommended)
 
-Run the interactive installer directly in your terminal:
+Runs the installer directly from GitHub (auto-launches via `npx` with security bypasses if Node is installed, otherwise falls back to a PowerShell menu):
 
-```bash
-npx github:andrian-syh/roblox-best-practices-skill
+```powershell
+irm https://raw.githubusercontent.com/andrian-syh/roblox-best-practices-skill/main/install.ps1 | iex
 ```
-
-#### CLI Options & Flags
-
-You can pass flags to automate or customize the installation:
-
-- **All Agents**: `--all` (or `-a`) - Installs the skill for the Universal path and all supported additional agents.
-- **Specific Version Tag**: `--tag <tag_name>` (or `-t <tag_name>`) - Target a specific version tag from GitHub (e.g., `v1.0.0`, `v1.1.7`).
-- **Help**: `--help` (or `-h`) - Show CLI help message.
 
 ---
 
-### Method 2: Shell/Terminal One-Liner (macOS & Linux Fallback)
+### Method 2: Shell/Terminal One-Liner (macOS & Linux - Recommended)
 
-Runs the installer directly from GitHub (runs via `npx` if Node is installed, otherwise falls back to a POSIX shell menu):
+Runs the installer directly from GitHub (auto-launches via `npx` with security bypasses if Node is installed, otherwise falls back to a POSIX shell menu):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/andrian-syh/roblox-best-practices-skill/main/install.sh | bash
@@ -36,13 +28,24 @@ curl -fsSL https://raw.githubusercontent.com/andrian-syh/roblox-best-practices-s
 
 ---
 
-### Method 3: PowerShell One-Liner (Windows Fallback)
+### Method 3: Using `npx` directly (Deprecated)
 
-Runs the installer directly from GitHub (runs via `npx` if Node is installed, otherwise falls back to an interactive PowerShell menu):
+> [!WARNING]
+> **DEPRECATED**: Direct `npx` execution is deprecated due to security defaults in newer versions of npm (such as npm v12+) which block Git-based fetches by default (throwing an `EALLOWGIT` error). It is strongly recommended to use **Method 1** or **Method 2** above, which automatically handle these checks and apply necessary security bypass flags.
 
-```powershell
-irm https://raw.githubusercontent.com/andrian-syh/roblox-best-practices-skill/main/install.ps1 | iex
+If you must run it directly, you can bypass npm restrictions by passing the `--allow-git=all` flag (npm v12+):
+
+```bash
+npx --allow-git=all github:andrian-syh/roblox-best-practices-skill
 ```
+
+#### CLI Options & Flags (Automated Installs)
+
+You can pass flags to the installer to automate configuration:
+
+- **All Agents**: `--all` (or `-a`) - Installs the skill for the Universal path and all supported additional agents.
+- **Specific Version Tag**: `--tag <tag_name>` (or `-t <tag_name>`) - Target a specific version tag from GitHub (e.g., `v1.0.0`, `v1.1.7`).
+- **Help**: `--help` (or `-h`) - Show CLI help message.
 
 ---
 
