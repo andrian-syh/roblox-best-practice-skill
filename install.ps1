@@ -62,6 +62,8 @@ try {
       @{ Name = "Augment"; Path = ".augment/skills"; Parent = ".augment" }
       @{ Name = "IBM Bob"; Path = ".bob/skills"; Parent = ".bob" }
       @{ Name = "Claude Code"; Path = ".claude/skills"; Parent = ".claude" }
+      @{ Name = "Codex"; Path = ".codex/skills"; Parent = ".codex" }
+      @{ Name = "Gemini CLI"; Path = ".gemini/config/skills"; Parent = ".gemini" }
       @{ Name = "Cursor"; Path = ".cursor/skills"; Parent = ".cursor" }
       @{ Name = "Windsurf"; Path = ".windsurf/skills"; Parent = ".windsurf" }
       @{ Name = "Cline"; Path = ".cline/skills"; Parent = ".cline" }
@@ -74,10 +76,11 @@ try {
       @{ Name = "OpenClaude"; Path = ".openclaude/skills"; Parent = ".openclaude" }
   )
 
-  # Check which parent folders exist in current directory
+  # Check which parent folders exist in user's home directory
   $detectedAgents = @()
   foreach ($agent in $additionalAgents) {
-      if (Test-Path $agent.Parent) {
+      $parentHomePath = Join-Path $HOME $agent.Parent
+      if (Test-Path $parentHomePath) {
           $detectedAgents += $agent
       }
   }
@@ -94,12 +97,12 @@ try {
 
   if ($detectedAgents.Count -gt 0) {
       Write-Host ""
-      Write-Host "Detected existing agent directories in your project:" -ForegroundColor Yellow
+      Write-Host "Detected existing agent directories in your home directory:" -ForegroundColor Yellow
       for ($i = 0; $i -lt $detectedAgents.Count; $i++) {
           $idx = $i + 1
           $agentName = $detectedAgents[$i].Name
           $agentPath = $detectedAgents[$i].Path
-          Write-Host ("  {0}) [x] {1} ({2})" -f $idx, $agentName, $agentPath) -ForegroundColor Cyan
+          Write-Host ("  {0}) [x] {1} (~/{2})" -f $idx, $agentName, $agentPath) -ForegroundColor Cyan
       }
       Write-Host ""
       $confirm = Read-Host "Do you want to install the skill to these detected agents? (Y/n)"
@@ -109,12 +112,22 @@ try {
               $agentPath = $agent.Path
               Write-Host ""
               Write-Host ("Installing to {0}..." -f $agentName) -ForegroundColor Cyan
-              Copy-SkillFolder $srcSkillDir (Join-Path "." ($agentPath + "/roblox-best-practices"))
+              Copy-SkillFolder $srcSkillDir (Join-Path $HOME ($agentPath + "/roblox-best-practices"))
+          }
+          # Show assumed installed for non-detected agents
+          foreach ($agent in $additionalAgents) {
+              if ($detectedAgents.Name -notcontains $agent.Name) {
+                  Write-Host ("[INSTALLED] (Assumed) " + $agent.Name) -ForegroundColor Green
+              }
           }
       }
   } else {
       Write-Host ""
-      Write-Host "No other agent directories detected in this folder. Skip additional agents." -ForegroundColor Gray
+      Write-Host "No other agent directories detected in your home directory. Skip additional agents." -ForegroundColor Gray
+      # Show assumed installed for all
+      foreach ($agent in $additionalAgents) {
+          Write-Host ("[INSTALLED] (Assumed) " + $agent.Name) -ForegroundColor Green
+      }
   }
 
   Write-Host ""

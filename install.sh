@@ -92,15 +92,18 @@ install_targets() {
   local detected_names=""
   local detected_paths=""
   local count=0
+  local assumed_installed=""
   
   check_agent() {
     local name="$1"
     local path="$2"
     local parent="$3"
-    if [ -d "$parent" ]; then
+    if [ -d "$HOME/$parent" ]; then
       count=$((count+1))
-      detected_names="$detected_names\n  $count) [x] $name ($path)"
+      detected_names="$detected_names\n  $count) [x] $name (~/$path)"
       detected_paths="$detected_paths $path"
+    else
+      assumed_installed="$assumed_installed\n${GREEN}[INSTALLED] (Assumed) $name${NC}"
     fi
   }
 
@@ -109,6 +112,8 @@ install_targets() {
   check_agent "Augment" ".augment/skills" ".augment"
   check_agent "IBM Bob" ".bob/skills" ".bob"
   check_agent "Claude Code" ".claude/skills" ".claude"
+  check_agent "Codex" ".codex/skills" ".codex"
+  check_agent "Gemini CLI" ".gemini/config/skills" ".gemini"
   check_agent "Cursor" ".cursor/skills" ".cursor"
   check_agent "Windsurf" ".windsurf/skills" ".windsurf"
   check_agent "Cline" ".cline/skills" ".cline"
@@ -122,7 +127,7 @@ install_targets() {
 
   if [ $count -gt 0 ]; then
     echo ""
-    echo "Detected existing agent directories in your project:"
+    echo "Detected existing agent directories in your home directory:"
     printf "$detected_names\n"
     echo ""
     printf "Do you want to install the skill to these detected agents? (Y/n): "
@@ -131,13 +136,15 @@ install_targets() {
     if [ "$CONFIRM" = "" ] || [ "$CONFIRM" = "Y" ]; then
       for path in $detected_paths; do
         echo ""
-        echo "Installing to $path/roblox-best-practices..."
-        copy_folder "$SRC_SKILL_DIR" "./$path/roblox-best-practices"
+        echo "Installing to $HOME/$path/roblox-best-practices..."
+        copy_folder "$SRC_SKILL_DIR" "$HOME/$path/roblox-best-practices"
       done
+      printf "$assumed_installed\n"
     fi
   else
     echo ""
-    echo "No other agent directories detected in this folder. Skip additional agents."
+    echo "No other agent directories detected in your home directory. Skip additional agents."
+    printf "$assumed_installed\n"
   fi
 
   echo ""

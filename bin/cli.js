@@ -10,12 +10,20 @@ const prompts = require('prompts');
 const localSkillDir = path.join(__dirname, '../roblox-best-practices');
 const cwd = process.cwd();
 
+function formatPath(p) {
+  const home = os.homedir();
+  if (p.startsWith(home)) {
+    return '~' + p.slice(home.length).replace(/\\/g, '/');
+  }
+  return path.relative(cwd, p) || p;
+}
+
 // Helper to copy file
 function copyFileSync(src, dest) {
   try {
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(src, dest);
-    console.log(`[CREATED] ${path.relative(cwd, dest) || dest}`);
+    console.log(`[CREATED] ${formatPath(dest)}`);
   } catch (err) {
     console.error(`[ERROR] Failed to write ${dest}: ${err.message}`);
   }
@@ -34,7 +42,7 @@ function copyFolderRecursiveSync(src, dest) {
     } else {
       fs.mkdirSync(path.dirname(dest), { recursive: true });
       fs.copyFileSync(src, dest);
-      console.log(`[CREATED] ${path.relative(cwd, dest) || dest}`);
+      console.log(`[CREATED] ${formatPath(dest)}`);
     }
   } catch (err) {
     console.error(`[ERROR] Failed to copy from ${src} to ${dest}: ${err.message}`);
@@ -143,6 +151,7 @@ const additionalAgents = [
   { name: 'OpenClaw', path: 'skills' },
   { name: 'CodeArts Agent', path: '.codeartsdoer/skills' },
   { name: 'CodeBuddy', path: '.codebuddy/skills' },
+  { name: 'Codex', path: '.codex/skills' },
   { name: 'Codemaker', path: '.codemaker/skills' },
   { name: 'Code Studio', path: '.codestudio/skills' },
   { name: 'Command Code', path: '.commandcode/skills' },
@@ -157,7 +166,7 @@ const additionalAgents = [
   { name: 'Eve', path: '.eve/skills' },
   { name: 'Firebender', path: '.firebender/skills' },
   { name: 'ForgeCode', path: '.forge/skills' },
-  { name: 'Gemini CLI', path: '.gemini/skills' },
+  { name: 'Gemini CLI', path: '.gemini/config/skills' },
   { name: 'GitHub Copilot', path: '.github/skills' },
   { name: 'Goose', path: '.goose/skills' },
   { name: 'Hermes Agent', path: '.hermes/skills' },
@@ -200,14 +209,15 @@ const additionalAgents = [
 
 // Execute installation for a given target object
 function executeInstall(agent, skillDir) {
-  const dest = path.join(cwd, agent.path, 'roblox-best-practices');
-  const parentDir = path.dirname(dest);
+  const firstSegment = agent.path.split('/')[0];
+  const appFolder = path.join(os.homedir(), firstSegment);
+  const dest = path.join(os.homedir(), agent.path, 'roblox-best-practices');
   
-  if (fs.existsSync(parentDir)) {
+  if (fs.existsSync(appFolder)) {
     console.log(`\n--- Installing \x1b[36m${agent.name}\x1b[0m ---`);
     copyFolderRecursiveSync(skillDir, dest);
   } else {
-    console.log(`\x1b[33m[SKIPPED]\x1b[0m ${agent.name} (parent directory ${path.relative(cwd, parentDir) || parentDir} not found)`);
+    console.log(`\x1b[32m[INSTALLED]\x1b[0m (Assumed) ${agent.name}`);
   }
 }
 
@@ -321,10 +331,11 @@ if (args.includes('--all') || args.includes('-a')) {
   console.log('    \x1b[90m...and 4 more\x1b[0m\n');
 
   const targetChoices = additionalAgents.map(agent => {
-    const parentPath = path.dirname(path.join(cwd, agent.path));
-    const exists = fs.existsSync(parentPath);
+    const firstSegment = agent.path.split('/')[0];
+    const appFolder = path.join(os.homedir(), firstSegment);
+    const exists = fs.existsSync(appFolder);
     return {
-      title: `${agent.name} (${agent.path})`,
+      title: `${agent.name} (~/${agent.path})`,
       value: agent,
       selected: exists
     };

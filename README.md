@@ -55,10 +55,10 @@ You can pass flags to the installer to automate configuration:
 2. **Universal Destination**: The skill is always installed to `./.agents/skills/roblox-best-practices/` (Universal workspace customizations). This automatically makes it available to compatible agents such as **Antigravity**, **Cline**, **Codex**, **Warp**, **Zed**, **Amp**, **Kimi Code CLI**, **OpenCode**, and others.
 3. **Additional Agent Folders**:
    - The installer displays a list of 72 additional supported agents.
-   - It scans your workspace root directory for existing configuration folders of these agents (like `.cursor/`, `.claude/`, `.windsurf/`, `.roo/`, etc.).
+   - It scans your user home directory for existing configuration folders of these agents (like `~/.cursor/`, `~/.claude/`, `~/.windsurf/`, `~/.roo/`, etc.).
    - If found, it **pre-selects** them in the menu.
    - You can type to **search and filter** the list in real-time.
-   - The skill will be copied to the selected folders only if their parent folder exists, keeping your workspace neat.
+   - The skill will be copied to the selected folders only if their parent folder exists in the user's home directory. If the folder does not exist, the installer considers it as already installed (assumed installed).
 
 ---
 
@@ -67,15 +67,17 @@ You can pass flags to the installer to automate configuration:
 | Path Category | Target Directory | Compatible Tools / Agents |
 |---|---|---|
 | **Universal** (Always Included) | `./.agents/skills/` | Antigravity, Amp, Cline, Codex, Kimi Code CLI, OpenCode, Warp, Zed, and others |
-| **Additional (Local)** | `./.claude/skills/` | Claude Code |
-| **Additional (Local)** | `./.cursor/skills/` | Cursor |
-| **Additional (Local)** | `./.windsurf/skills/` | Windsurf / Cascade |
-| **Additional (Local)** | `./.roo/skills/` | Roo Code |
-| **Additional (Local)** | `./.cline/skills/` | Cline |
-| **Additional (Local)** | `./.trae/skills/` | Trae AI |
-| **Additional (Local)** | `./.aider-desk/skills/` | AiderDesk |
-| **Additional (Local)** | `./data/skills/` | AstrBot |
-| **Additional (Local)** | *(and 60+ others)* | Complete set of 72 agents supported |
+| **Additional (Global)** | `~/.claude/skills/` | Claude Code |
+| **Additional (Global)** | `~/.gemini/config/skills/` | Gemini |
+| **Additional (Global)** | `~/.codex/skills/` | Codex |
+| **Additional (Global)** | `~/.cursor/skills/` | Cursor |
+| **Additional (Global)** | `~/.windsurf/skills/` | Windsurf / Cascade |
+| **Additional (Global)** | `~/.roo/skills/` | Roo Code |
+| **Additional (Global)** | `~/.cline/skills/` | Cline |
+| **Additional (Global)** | `~/.trae/skills/` | Trae AI |
+| **Additional (Global)** | `~/.aider-desk/skills/` | AiderDesk |
+| **Additional (Global)** | `~/data/skills/` | AstrBot |
+| **Additional (Global)** | *(and 60+ others)* | Complete set of 72 agents supported |
 
 ---
 
