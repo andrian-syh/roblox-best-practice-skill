@@ -95,35 +95,30 @@ install_targets() {
   local assumed_installed=""
   
   check_agent() {
-    local name="$1"
-    local path="$2"
-    local parent="$3"
+    name="$1"
+    apath="$2"
+    parent="$3"
     if [ -d "$HOME/$parent" ]; then
       count=$((count+1))
-      detected_names="$detected_names\n  $count) [x] $name (~/$path)"
-      detected_paths="$detected_paths $path"
+      detected_names="$detected_names\n  $count) [x] $name (~/$apath)"
+      detected_paths="$detected_paths $apath"
     else
       assumed_installed="$assumed_installed\n${GREEN}[INSTALLED] (Assumed) $name${NC}"
     fi
   }
 
-  check_agent "AiderDesk" ".aider-desk/skills" ".aider-desk"
-  check_agent "AstrBot" "data/skills" "data"
-  check_agent "Augment" ".augment/skills" ".augment"
-  check_agent "IBM Bob" ".bob/skills" ".bob"
-  check_agent "Claude Code" ".claude/skills" ".claude"
-  check_agent "Codex" ".codex/skills" ".codex"
-  check_agent "Gemini CLI" ".gemini/config/skills" ".gemini"
-  check_agent "Cursor" ".cursor/skills" ".cursor"
-  check_agent "Windsurf" ".windsurf/skills" ".windsurf"
-  check_agent "Cline" ".cline/skills" ".cline"
-  check_agent "Roo Code" ".roo/skills" ".roo"
-  check_agent "Kilo Code" ".kilocode/skills" ".kilocode"
-  check_agent "Trae AI" ".trae/skills" ".trae"
-  check_agent "Zed Editor" ".zed/skills" ".zed"
-  check_agent "Amazon Q" ".amazonq/skills" ".amazonq"
-  check_agent "OpenCode" ".opencode/skills" ".opencode"
-  check_agent "OpenClaude" ".openclaude/skills" ".openclaude"
+  # Read the canonical agent list from the shared data file (bin/agents.txt in the download),
+  # so this fallback stays in sync with bin/cli.js and install.ps1.
+  AGENTS_FILE="$TEMP_DIR/bin/agents.txt"
+  if [ -f "$AGENTS_FILE" ]; then
+    while IFS='|' read -r name apath; do
+      name=$(printf '%s' "$name" | tr -d '\r')
+      case "$name" in ''|\#*) continue ;; esac
+      apath=$(printf '%s' "$apath" | tr -d '\r')
+      parent=$(printf '%s' "$apath" | cut -d/ -f1)
+      check_agent "$name" "$apath" "$parent"
+    done < "$AGENTS_FILE"
+  fi
 
   if [ $count -gt 0 ]; then
     echo ""

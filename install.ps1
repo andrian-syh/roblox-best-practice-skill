@@ -54,27 +54,20 @@ try {
     Write-Host "[CREATED] $dest" -ForegroundColor Green
   }
 
-  # List of additional agents with paths
-  $additionalAgents = @(
-      @{ Name = "AiderDesk"; Path = ".aider-desk/skills"; Parent = ".aider-desk" }
-      @{ Name = "AstrBot"; Path = "data/skills"; Parent = "data" }
-      @{ Name = "Autohand Code CLI"; Path = ".autohand/skills"; Parent = ".autohand" }
-      @{ Name = "Augment"; Path = ".augment/skills"; Parent = ".augment" }
-      @{ Name = "IBM Bob"; Path = ".bob/skills"; Parent = ".bob" }
-      @{ Name = "Claude Code"; Path = ".claude/skills"; Parent = ".claude" }
-      @{ Name = "Codex"; Path = ".codex/skills"; Parent = ".codex" }
-      @{ Name = "Gemini CLI"; Path = ".gemini/config/skills"; Parent = ".gemini" }
-      @{ Name = "Cursor"; Path = ".cursor/skills"; Parent = ".cursor" }
-      @{ Name = "Windsurf"; Path = ".windsurf/skills"; Parent = ".windsurf" }
-      @{ Name = "Cline"; Path = ".cline/skills"; Parent = ".cline" }
-      @{ Name = "Roo Code"; Path = ".roo/skills"; Parent = ".roo" }
-      @{ Name = "Kilo Code"; Path = ".kilocode/skills"; Parent = ".kilocode" }
-      @{ Name = "Trae AI"; Path = ".trae/skills"; Parent = ".trae" }
-      @{ Name = "Zed Editor"; Path = ".zed/skills"; Parent = ".zed" }
-      @{ Name = "Amazon Q"; Path = ".amazonq/skills"; Parent = ".amazonq" }
-      @{ Name = "OpenCode"; Path = ".opencode/skills"; Parent = ".opencode" }
-      @{ Name = "OpenClaude"; Path = ".openclaude/skills"; Parent = ".openclaude" }
-  )
+  # Load the canonical agent list from the shared data file (bin/agents.txt in the download),
+  # so this fallback stays in sync with bin/cli.js and install.sh.
+  $additionalAgents = @()
+  $agentsFile = Join-Path $tempDir "bin/agents.txt"
+  if (Test-Path $agentsFile) {
+      foreach ($line in Get-Content $agentsFile) {
+          $trimmed = $line.Trim()
+          if ($trimmed -and -not $trimmed.StartsWith('#')) {
+              $parts = $trimmed.Split('|', 2)
+              $agentPath = $parts[1].Trim()
+              $additionalAgents += @{ Name = $parts[0].Trim(); Path = $agentPath; Parent = ($agentPath -split '/')[0] }
+          }
+      }
+  }
 
   # Check which parent folders exist in user's home directory
   $detectedAgents = @()

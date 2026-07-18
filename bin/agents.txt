@@ -1,0 +1,67 @@
+# Canonical list of "additional" agents (beyond the always-included Universal ./.agents/skills path).
+# Single source of truth read by bin/cli.js, install.ps1, and install.sh — edit here only.
+# Format: Display Name|home-relative skills path   (the parent folder checked for detection is the path's first segment)
+# Lines starting with '#' and blank lines are ignored.
+AiderDesk|.aider-desk/skills
+AstrBot|data/skills
+Autohand Code CLI|.autohand/skills
+Augment|.augment/skills
+IBM Bob|.bob/skills
+Claude Code|.claude/skills
+OpenClaw|skills
+CodeArts Agent|.codeartsdoer/skills
+CodeBuddy|.codebuddy/skills
+Codex|.codex/skills
+Codemaker|.codemaker/skills
+Code Studio|.codestudio/skills
+Command Code|.commandcode/skills
+Continue|.continue/skills
+Cortex Code|.cortex/skills
+Crush|.crush/skills
+Cursor|.cursor/skills
+DeepAgents|.deepagents/skills
+Devin for Terminal|.devin/skills
+Dexto|.dexto/skills
+Droid|.factory/skills
+Eve|.eve/skills
+Firebender|.firebender/skills
+ForgeCode|.forge/skills
+Gemini CLI|.gemini/config/skills
+GitHub Copilot|.github/skills
+Goose|.goose/skills
+Hermes Agent|.hermes/skills
+inference.sh|.inferencesh/skills
+Jazz|.jazz/skills
+Junie|.junie/skills
+iFlow CLI|.iflow/skills
+Kilo Code|.kilocode/skills
+Kiro CLI|.kiro/skills
+Kode|.kode/skills
+Lingma|.lingma/skills
+Loaf|.loaf/skills
+MCPJam|.mcpjam/skills
+Mistral Vibe|.vibe/skills
+Moxby|.moxby/skills
+Mux|.mux/skills
+OpenHands|.openhands/skills
+Ona|.ona/skills
+Pi|.pi/skills
+Qoder|.qoder/skills
+Qoder CN|.qoder-cn/skills
+Qwen Code|.qwen/skills
+Replit Agent|.replit/skills
+Reasonix|.reasonix/skills
+Rovodev|.rovodev/skills
+Roo Code|.roo/skills
+Tabnine CLI|.tabnine/skills
+Terramind|.terramind/skills
+TinyCloud|.tinycloud/skills
+Trae AI|.trae/skills
+Trae CN|.trae-cn/skills
+Windsurf|.windsurf/skills
+Zencoder|.zencoder/skills
+Zenflow|.zenflow/skills
+Neovate|.neovate/skills
+Pochi|.pochi/skills
+Promptscript|.promptscript/skills
+Adal|.adal/skills

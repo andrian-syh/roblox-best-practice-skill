@@ -170,71 +170,21 @@ function cleanupTempDir(tempDir) {
   }
 }
 
-const additionalAgents = [
-  { name: 'AiderDesk', path: '.aider-desk/skills' },
-  { name: 'AstrBot', path: 'data/skills' },
-  { name: 'Autohand Code CLI', path: '.autohand/skills' },
-  { name: 'Augment', path: '.augment/skills' },
-  { name: 'IBM Bob', path: '.bob/skills' },
-  { name: 'Claude Code', path: '.claude/skills' },
-  { name: 'OpenClaw', path: 'skills' },
-  { name: 'CodeArts Agent', path: '.codeartsdoer/skills' },
-  { name: 'CodeBuddy', path: '.codebuddy/skills' },
-  { name: 'Codex', path: '.codex/skills' },
-  { name: 'Codemaker', path: '.codemaker/skills' },
-  { name: 'Code Studio', path: '.codestudio/skills' },
-  { name: 'Command Code', path: '.commandcode/skills' },
-  { name: 'Continue', path: '.continue/skills' },
-  { name: 'Cortex Code', path: '.cortex/skills' },
-  { name: 'Crush', path: '.crush/skills' },
-  { name: 'Cursor', path: '.cursor/skills' },
-  { name: 'DeepAgents', path: '.deepagents/skills' },
-  { name: 'Devin for Terminal', path: '.devin/skills' },
-  { name: 'Dexto', path: '.dexto/skills' },
-  { name: 'Droid', path: '.factory/skills' },
-  { name: 'Eve', path: '.eve/skills' },
-  { name: 'Firebender', path: '.firebender/skills' },
-  { name: 'ForgeCode', path: '.forge/skills' },
-  { name: 'Gemini CLI', path: '.gemini/config/skills' },
-  { name: 'GitHub Copilot', path: '.github/skills' },
-  { name: 'Goose', path: '.goose/skills' },
-  { name: 'Hermes Agent', path: '.hermes/skills' },
-  { name: 'inference.sh', path: '.inferencesh/skills' },
-  { name: 'Jazz', path: '.jazz/skills' },
-  { name: 'Junie', path: '.junie/skills' },
-  { name: 'iFlow CLI', path: '.iflow/skills' },
-  { name: 'Kilo Code', path: '.kilocode/skills' },
-  { name: 'Kiro CLI', path: '.kiro/skills' },
-  { name: 'Kode', path: '.kode/skills' },
-  { name: 'Lingma', path: '.lingma/skills' },
-  { name: 'Loaf', path: '.loaf/skills' },
-  { name: 'MCPJam', path: '.mcpjam/skills' },
-  { name: 'Mistral Vibe', path: '.vibe/skills' },
-  { name: 'Moxby', path: '.moxby/skills' },
-  { name: 'Mux', path: '.mux/skills' },
-  { name: 'OpenHands', path: '.openhands/skills' },
-  { name: 'Ona', path: '.ona/skills' },
-  { name: 'Pi', path: '.pi/skills' },
-  { name: 'Qoder', path: '.qoder/skills' },
-  { name: 'Qoder CN', path: '.qoder-cn/skills' },
-  { name: 'Qwen Code', path: '.qwen/skills' },
-  { name: 'Replit Agent', path: '.replit/skills' },
-  { name: 'Reasonix', path: '.reasonix/skills' },
-  { name: 'Rovodev', path: '.rovodev/skills' },
-  { name: 'Roo Code', path: '.roo/skills' },
-  { name: 'Tabnine CLI', path: '.tabnine/skills' },
-  { name: 'Terramind', path: '.terramind/skills' },
-  { name: 'TinyCloud', path: '.tinycloud/skills' },
-  { name: 'Trae AI', path: '.trae/skills' },
-  { name: 'Trae CN', path: '.trae-cn/skills' },
-  { name: 'Windsurf', path: '.windsurf/skills' },
-  { name: 'Zencoder', path: '.zencoder/skills' },
-  { name: 'Zenflow', path: '.zenflow/skills' },
-  { name: 'Neovate', path: '.neovate/skills' },
-  { name: 'Pochi', path: '.pochi/skills' },
-  { name: 'Promptscript', path: '.promptscript/skills' },
-  { name: 'Adal', path: '.adal/skills' }
-];
+// Load the canonical agent list from the shared data file (bin/agents.txt),
+// so cli.js, install.ps1, and install.sh all read the same source.
+function loadAgents() {
+  const file = path.join(__dirname, 'agents.txt');
+  return fs.readFileSync(file, 'utf8')
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith('#'))
+    .map(line => {
+      const [name, agentPath] = line.split('|');
+      return { name: name.trim(), path: agentPath.trim() };
+    });
+}
+
+const additionalAgents = loadAgents();
 
 // Execute installation for a given target object
 function executeInstall(agent, skillDir) {
