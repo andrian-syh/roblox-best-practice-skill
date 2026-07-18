@@ -51,7 +51,7 @@ You can pass flags to the installer to automate configuration:
 
 ## How It Works
 
-1. **Version Selection**: The installer dynamically fetches available tags from GitHub (e.g., `v1.1.7`, `v1.0.0`). You can choose to install the latest bundled version instantly or download an older version from GitHub.
+1. **Version Selection**: The installer dynamically fetches available tags from GitHub. The menu shows the latest bundled version (installed instantly) plus the **5 most recent published versions** to keep the list short. Older versions are not listed but remain fully installable — pick **"Other version (type manually)…"** and enter the tag (e.g. `v1.0.0`), or pass `--tag <tag_name>` for a non-interactive install.
 2. **Universal Destination**: The skill is always installed to `./.agents/skills/roblox-best-practices/` (Universal workspace customizations). This automatically makes it available to compatible agents such as **Antigravity**, **Cline**, **Codex**, **Warp**, **Zed**, **Amp**, **Kimi Code CLI**, **OpenCode**, and others.
 3. **Additional Agent Folders**:
    - The installer displays a list of 72 additional supported agents.

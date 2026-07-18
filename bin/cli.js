@@ -104,12 +104,26 @@ function isValidTag(tag) {
   return typeof tag === 'string' && /^v?\d+\.\d+\.\d+$/.test(tag);
 }
 
+// Sort version tags newest-first by numeric major.minor.patch (e.g. v1.5.1 before v1.1.7).
+function compareTagsDesc(a, b) {
+  const parse = t => t.replace(/^v/, '').split('.').map(Number);
+  const pa = parse(a);
+  const pb = parse(b);
+  for (let i = 0; i < 3; i++) {
+    if ((pa[i] || 0) !== (pb[i] || 0)) return (pb[i] || 0) - (pa[i] || 0);
+  }
+  return 0;
+}
+
 // Download a specific tag from GitHub to a temporary directory
 function downloadVersion(tag) {
   if (!isValidTag(tag)) {
     console.error(`\x1b[31m[ERROR] Invalid version tag "${tag}". Expected a form like v1.5.1.\x1b[0m`);
     process.exit(1);
   }
+
+  // GitHub tags for this repo are v-prefixed; accept a bare "1.0.0" too.
+  if (!tag.startsWith('v')) tag = 'v' + tag;
 
   const tempDir = path.join(os.tmpdir(), `roblox_skill_${Math.random().toString(36).slice(2, 11)}`);
   console.log(`Downloading version ${tag} to temporary directory...`);
@@ -264,14 +278,22 @@ if (args.includes('--all') || args.includes('-a')) {
     { title: `Latest (Local bundled v${bundledVersion})`, value: 'latest', description: 'Installs the latest version instantly' }
   ];
 
+  const RECENT_LIMIT = 5;
+
   if (tags.length > 0) {
-    tags.forEach(tag => {
-      versionChoices.push({
-        title: `${tag} (Download from GitHub)`,
-        value: tag,
-        description: `Downloads and installs version ${tag}`
+    // Show only the latest few published versions to keep the menu short;
+    // older ones stay installable via the manual-entry option below (or --tag).
+    tags
+      .filter(isValidTag)
+      .sort(compareTagsDesc)
+      .slice(0, RECENT_LIMIT)
+      .forEach(tag => {
+        versionChoices.push({
+          title: `${tag} (Download from GitHub)`,
+          value: tag,
+          description: `Downloads and installs version ${tag}`
+        });
       });
-    });
   } else {
     // Fallback static choices if offline/rate-limited
     versionChoices.push(
@@ -280,6 +302,13 @@ if (args.includes('--all') || args.includes('-a')) {
       { title: 'v1.0.0 (Download from GitHub)', value: 'v1.0.0', description: 'Downloads and installs v1.0.0' }
     );
   }
+
+  // Always let the user reach an older/unlisted version by typing it.
+  versionChoices.push({
+    title: 'Other version (type manually)…',
+    value: '__manual__',
+    description: 'Enter any published version tag, e.g. v1.0.0 (for versions not listed above)'
+  });
 
   const versionResponse = await prompts({
     type: 'select',
@@ -293,7 +322,24 @@ if (args.includes('--all') || args.includes('-a')) {
     process.exit(0);
   }
 
-  const selectedTag = versionResponse.version;
+  let selectedTag = versionResponse.version;
+
+  // Manual entry: prompt for a version tag and validate it.
+  if (selectedTag === '__manual__') {
+    const manualResponse = await prompts({
+      type: 'text',
+      name: 'tag',
+      message: 'Enter the version tag to install (e.g. v1.0.0):',
+      validate: value => isValidTag((value || '').trim()) ? true : 'Enter a version like v1.0.0'
+    });
+
+    if (!manualResponse.tag) {
+      console.log('\n\x1b[31m[CANCELLED] Installation cancelled.\x1b[0m');
+      process.exit(0);
+    }
+
+    selectedTag = manualResponse.tag.trim();
+  }
 
   // Step 2: Select Targets
   console.log(`\n\x1b[32m•\x1b[0m ${additionalAgents.length + 9} agents`);
