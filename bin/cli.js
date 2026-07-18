@@ -10,6 +10,9 @@ const prompts = require('prompts');
 const localSkillDir = path.join(__dirname, '../roblox-best-practices');
 const cwd = process.cwd();
 
+// Single source of truth for the bundled version (kept in sync with package.json automatically)
+const { version: bundledVersion } = require('../package.json');
+
 function formatPath(p) {
   const home = os.homedir();
   if (p.startsWith(home)) {
@@ -27,6 +30,18 @@ function copyFileSync(src, dest) {
   } catch (err) {
     console.error(`[ERROR] Failed to write ${dest}: ${err.message}`);
   }
+}
+
+// Replace the destination skill folder wholesale, then copy.
+// Removing first clears files deleted in newer versions so no stale files linger
+// (mirrors the `rm -rf`/`Remove-Item` behavior of the shell/PowerShell fallbacks).
+function installSkillFolder(src, dest) {
+  try {
+    fs.rmSync(dest, { recursive: true, force: true });
+  } catch (err) {
+    console.error(`[WARN] Could not clear existing ${formatPath(dest)}: ${err.message}`);
+  }
+  copyFolderRecursiveSync(src, dest);
 }
 
 // Helper to copy folder recursively
@@ -215,7 +230,7 @@ function executeInstall(agent, skillDir) {
   
   if (fs.existsSync(appFolder)) {
     console.log(`\n--- Installing \x1b[36m${agent.name}\x1b[0m ---`);
-    copyFolderRecursiveSync(skillDir, dest);
+    installSkillFolder(skillDir, dest);
   } else {
     console.log(`\x1b[32m[INSTALLED]\x1b[0m (Assumed) ${agent.name}`);
   }
@@ -259,8 +274,8 @@ if (args.includes('--all') || args.includes('-a')) {
 
   // Universal
   console.log(`\n--- Installing \x1b[36mUniversal (.agents/skills)\x1b[0m ---`);
-  copyFolderRecursiveSync(activeSkillDir, path.join(cwd, '.agents/skills/roblox-best-practices'));
-  
+  installSkillFolder(activeSkillDir, path.join(cwd, '.agents/skills/roblox-best-practices'));
+
   // All additional
   additionalAgents.forEach(agent => {
     executeInstall(agent, activeSkillDir);
@@ -282,7 +297,7 @@ if (args.includes('--all') || args.includes('-a')) {
   const tags = await fetchGithubTags();
   
   const versionChoices = [
-    { title: 'Latest (Local bundled v1.5.1)', value: 'latest', description: 'Installs the latest version instantly' }
+    { title: `Latest (Local bundled v${bundledVersion})`, value: 'latest', description: 'Installs the latest version instantly' }
   ];
 
   if (tags.length > 0) {
@@ -296,7 +311,7 @@ if (args.includes('--all') || args.includes('-a')) {
   } else {
     // Fallback static choices if offline/rate-limited
     versionChoices.push(
-      { title: 'v1.5.1 (Download from GitHub)', value: 'v1.5.1', description: 'Downloads and installs v1.5.1' },
+      { title: `v${bundledVersion} (Download from GitHub)`, value: `v${bundledVersion}`, description: `Downloads and installs v${bundledVersion}` },
       { title: 'v1.1.7 (Download from GitHub)', value: 'v1.1.7', description: 'Downloads and installs v1.1.7' },
       { title: 'v1.0.0 (Download from GitHub)', value: 'v1.0.0', description: 'Downloads and installs v1.0.0' }
     );
@@ -372,7 +387,7 @@ if (args.includes('--all') || args.includes('-a')) {
   
   // 1. Always install to Universal
   console.log(`\n--- Installing \x1b[36mUniversal (.agents/skills)\x1b[0m ---`);
-  copyFolderRecursiveSync(activeSkillDir, path.join(cwd, '.agents/skills/roblox-best-practices'));
+  installSkillFolder(activeSkillDir, path.join(cwd, '.agents/skills/roblox-best-practices'));
 
   // 2. Install to selected additional agents (only if parent dir exists)
   selectedAgents.forEach(agent => {
