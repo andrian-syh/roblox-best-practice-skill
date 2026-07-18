@@ -12,6 +12,7 @@ Reusable patterns that work in any project structure. Each fits the VARIABLES/FU
 - **Versioned store names** (`PlayerData_v2`) + a migration function on load, so schema changes never corrupt old data.
 - **Session cache:** load once on join into a server-side table; all gameplay reads/writes hit the cache; DataStore only on save triggers. Never read DataStores during gameplay.
 - **Session locking** (write a lock key with server id + timestamp, or use MemoryStore) if item duplication via server-hopping matters for your economy.
+- **Store only serializable shapes.** DataStore values must survive JSON encoding: strings valid UTF-8; table keys either a contiguous `1..n` array or all strings (mixed or sparse keys fail); no `NaN`/`±inf`; no Instances or userdata (`Vector3`, `CFrame`, `Color3`, EnumItems — convert to primitive tables/numbers on save, rebuild on load); no cycles; value ≤ 4 MB, key name ≤ 50 characters. A violation makes the **save call itself fail** — so keep session data in a serializable shape from the start rather than sanitizing at save time, and make the retry wrapper log the error so these failures are never silent.
 
 ## Remote Communication
 
@@ -53,6 +54,7 @@ CollectionService:GetInstanceAddedSignal("Lava"):Connect(bindLava)
 
 - Pair with `GetInstanceRemovedSignal` to clean up per-instance state (mandatory with StreamingEnabled — instances come and go).
 - Per-instance tuning via **Attributes** (`part:GetAttribute("Damage")`), not name-parsing or config child-values.
+- **Attribute limits:** attributes support a fixed set of value types (booleans, numbers, strings, and Roblox data types like `Vector3`/`Color3`/`UDim2`) — **no tables, no Instance references**. For structured per-instance data, keep a module-side registry keyed by the instance (with a removal path per the cleanup rules); don't make JSON-encoded attribute blobs a habit.
 
 ## Lifecycle & Cleanup
 
@@ -82,6 +84,21 @@ Rules:
 - Whatever creates a resource registers its destruction in the same place.
 - Handle players already present before your `PlayerAdded` connection (`for _, p in Players:GetPlayers()`), and characters already spawned before `CharacterAdded`.
 - Module init/start: expose an idempotent `Module.Init()` if setup order matters; call it from INITIALIZATION of a single bootstrap script rather than relying on require-order side effects.
+
+## Character Lifecycle
+
+Characters respawn; players persist. Confusing the two lifetimes is a standing leak/bug source:
+
+- Connect `player.CharacterAdded` **and** handle an already-existing `player.Character` (same both-cases rule as `PlayerAdded`).
+- Inside `CharacterAdded`, descendants may not have arrived yet — `character:WaitForChild("Humanoid")` (or `HumanoidRootPart`) rather than direct indexing; `Humanoid.Died` for death logic.
+- **Per-life state** (connections, temporary buffs, hitbox registrations, active tweens on the character) is keyed by the *character* and cleared in `CharacterRemoving` or the character model's `Destroying` — respawn does not clean your module tables for you. **Per-player state** persists across respawns and clears in `PlayerRemoving`.
+- Connections made *on the character's own instances* die with the character; connections held elsewhere that merely *reference* the character do not — those are the ones that need the explicit teardown.
+
+## Cross-Server Communication
+
+- **MemoryStore** (sorted maps, queues, hash maps) for *ephemeral* shared state: matchmaking queues, live global leaderboards, session locks. Items always expire (45 days maximum); request quotas scale with player count and throttle under load — wrap calls in `pcall` + backoff exactly like DataStore, and keep values small. It is not a database: anything that must survive belongs in a DataStore.
+- **MessagingService** for small cross-server broadcasts (announcements, cache-invalidation pings). Delivery is **best-effort** — design so a lost message is recoverable (receivers re-read the authoritative state from MemoryStore/DataStore; the message is a hint, not the source of truth). Messages are size-capped (~1 KB) — send ids/references, not data blobs. Route through one topic-subscriber module per server rather than ad-hoc subscribes scattered across scripts.
+- **Reserved servers** (`TeleportService:ReserveServer`) for private instances/rooms. Teleport data travels via the client and is tamperable — treat it as a hint and re-validate anything security-relevant server-side on arrival (or pass it through MemoryStore keyed by a server-generated token instead).
 
 ## Object Pooling
 
@@ -129,3 +146,5 @@ Pool anything spawned more than ~once per second. Always reset *all* mutated pro
 | `Instance.new("Part", parent)` (parent arg) | Create, set properties, parent last |
 | Storing player data only in leaderstats | Session cache table; leaderstats is display-only |
 | `getfenv`/`setfenv`/`loadstring` | Never — kills Luau optimization and is a security hole |
+| `pcall` whose failure branch is silently ignored | Log the error with context or recover; comment genuinely ignorable failures ([luau-language.md](luau-language.md#error-handling)) |
+| Per-character state (connections, buffs) never cleared on respawn | Key by character, clear in `CharacterRemoving`/`Destroying` (see Character Lifecycle) |

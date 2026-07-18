@@ -13,6 +13,16 @@ Every rule in this skill applies to every genre — but each genre has a **domin
 - Autosave every 2–5 min; these games have long sessions and crashes must not erase an hour.
 - Update loops for hundreds of pets/generators: one staggered Heartbeat system iterating a table ([performance.md](performance.md) throttling), never a script or `while` loop per entity.
 
+## Tower Defense / Wave Defense
+
+**Dominant risk: server CPU at unit scale & economy integrity.**
+
+- One staggered update system iterates *all* units — never a script or loop per unit; pool units and projectiles ([performance.md](performance.md), [patterns.md](patterns.md#object-pooling)).
+- Pathfinding: compute a path once per path-change event (map edit, tower placement) and share the waypoint list across every unit on it — never per-unit, never per-frame. Clients interpolate movement from minimal replicated state (path id + progress scalar) instead of receiving per-frame CFrames.
+- Tower placement fully server-validated: funds, grid/zone legality, collision and placement limits — the client-side preview is cosmetic only.
+- Wave and economy state is server-side, data-driven config (wave tables, spawn schedules, scaling curves) — not bespoke scripts per wave.
+- Damage, kill credit, and reward math on the server; in co-op, compute reward splits once server-side, never per-client.
+
 ## Combat / FPS / PvP
 
 **Dominant risk: latency & cheating.** Fairness perception decides retention.
@@ -23,6 +33,15 @@ Every rule in this skill applies to every genre — but each genre has a **domin
 - Anti-cheat sanity checks ([security-monetization.md](security-monetization.md)): speed/teleport deltas, fire-rate caps, ammo accounting — all server-side.
 - Character physics is client-owned by design; never trust reported positions for hit *validation*, only for display.
 - Fixed-rate combat logic (`RunService` Heartbeat with accumulated dt; `BindToSimulation` only for synchronized physics/prediction code under `Workspace.UseFixedSimulation` — see [performance.md](performance.md)) so higher-FPS clients gain no advantage.
+
+## Battlegrounds / Fighting / Melee PvP
+
+**Dominant risk: combat feel vs. authority.** Shares the Combat/FPS profile above; melee/combo specifics below.
+
+- Combo, stun, and knockback state machines live server-side; the client plays animation and VFX instantly (prediction), the server confirms damage and state transitions. Reconcile mispredictions quietly.
+- Animation-driven hitboxes are validated server-side by **timing windows** (the attack's active frames plus a lag allowance) and spatial checks (range, facing) — never by client-reported hits alone, and never by trusting the client's animation state.
+- M1 chains and ability casts: per-action rate limits with cooldowns checked server-side; buffer at most one queued input — deeper input queues become macro exploits.
+- Ragdolls: physics runs on the network owner for smoothness, but ragdoll *state* (start, duration, recovery) is server-authoritative so a client can't cancel its own stun.
 
 ## Obby / Platformer
 

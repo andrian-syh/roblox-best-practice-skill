@@ -282,7 +282,7 @@ if (args.includes('--all') || args.includes('-a')) {
   const tags = await fetchGithubTags();
   
   const versionChoices = [
-    { title: 'Latest (Local bundled v1.1.7)', value: 'latest', description: 'Installs the latest version instantly' }
+    { title: 'Latest (Local bundled v1.5.1)', value: 'latest', description: 'Installs the latest version instantly' }
   ];
 
   if (tags.length > 0) {
@@ -296,6 +296,7 @@ if (args.includes('--all') || args.includes('-a')) {
   } else {
     // Fallback static choices if offline/rate-limited
     versionChoices.push(
+      { title: 'v1.5.1 (Download from GitHub)', value: 'v1.5.1', description: 'Downloads and installs v1.5.1' },
       { title: 'v1.1.7 (Download from GitHub)', value: 'v1.1.7', description: 'Downloads and installs v1.1.7' },
       { title: 'v1.0.0 (Download from GitHub)', value: 'v1.0.0', description: 'Downloads and installs v1.0.0' }
     );

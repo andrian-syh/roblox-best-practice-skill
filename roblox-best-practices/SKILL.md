@@ -19,10 +19,12 @@ Load only what the situation needs:
 | Existing codebase with its own conventions (Adaptive mode) | [references/adaptive-mode.md](references/adaptive-mode.md) |
 | Project uses community libraries (ProfileStore, Packet, Trove, Knit, Fusion, ...) | [references/community-libraries.md](references/community-libraries.md) |
 | Hot loops, memory, network traffic, rendering, profiling | [references/performance.md](references/performance.md) |
-| Data stores, remotes, cleanup, pooling, input, anti-patterns | [references/patterns.md](references/patterns.md) |
-| Purchases, anti-exploit, remote validation depth | [references/security-monetization.md](references/security-monetization.md) |
+| Data stores, remotes, cleanup, pooling, input, character lifecycle, cross-server, anti-patterns | [references/patterns.md](references/patterns.md) |
+| Purchases, anti-exploit, remote validation depth, text filtering, policy compliance | [references/security-monetization.md](references/security-monetization.md) |
 | UI/UX, cross-platform, testing, debugging, telemetry | [references/ui-ux-testing.md](references/ui-ux-testing.md) |
-| Genre is known (simulator, FPS, obby, RPG, racing, horror, social) | [references/genres.md](references/genres.md) |
+| Typing depth, task.spawn vs task.defer, deferred events, error handling, time APIs, native codegen | [references/luau-language.md](references/luau-language.md) |
+| Verifying that a change works (playtest workflow, test injection, command-bar VM pitfall) or verifying a review finding | [references/verification.md](references/verification.md) |
+| Genre is known (simulator, FPS, obby, RPG, racing, horror, social, tower defense, battlegrounds) | [references/genres.md](references/genres.md) |
 
 ## User Authority
 
@@ -91,6 +93,7 @@ When asked to *review or tidy existing code* (rather than write new code):
 - Section-layout/naming deviations and missing doc comments on trivial private functions → *propose* restructuring as minor suggestions, don't silently rewrite and don't report them as violations; the user decides.
 - Never reformat code unrelated to the request; consistency within the file beats consistency with this skill.
 - Before flagging an API as wrong/nonexistent, verify against the target environment (see Environment & Scale) — never flag from memory alone.
+- **Trace before flagging.** Follow the full flow across both sides of paired logic (writer/reader, serializer/deserializer, fire/handler) before reporting a bug — an asymmetry between paired sites is only a defect if tracing both sides shows a divergent outcome; it may deliberately compensate for the other side. Unusual-looking designs (state created before data exists, self-healing caches) may be intentional — check usage sites first. A finding needs a concrete failure scenario (inputs → wrong outcome); "could maybe fail" is not a finding. Full procedure: [references/verification.md](references/verification.md#review-verification-discipline-trace-before-flag).
 
 ## Environment & Scale
 
@@ -183,11 +186,12 @@ Full annotated templates (Script, LocalScript, ModuleScript): see [references/te
 - Start every script with `--!strict` (or `--!nonstrict` only when strict is impractical). Type-annotate public function signatures, Configuration constants, and State tables.
 - **Naming:** `PascalCase` for services and required module tables; `camelCase` for local variables, functions, and Instance references (`purchaseRemote`, `coinLabel`); `UPPER_SNAKE_CASE` for Configuration constants. Module public methods `PascalCase` (`Inventory.AddItem`), private functions `camelCase`.
 - Always `game:GetService()` — never `game.Workspace`-style direct indexing (exception: `workspace` global is fine).
-- **Never use deprecated APIs:** `wait()`/`spawn()`/`delay()` → `task.wait()`/`task.spawn()`/`task.delay()`; `Instance.new(class, parent)` two-arg form → set properties first, parent last; `:connect()`/`:wait()` lowercase → `:Connect()`/`:Wait()`; `BodyVelocity`/`BodyGyro` → constraints (`LinearVelocity`, `AlignOrientation`).
+- **Never use deprecated APIs:** `wait()`/`spawn()`/`delay()` → `task.wait()`/`task.spawn()`/`task.delay()`; `Instance.new(class, parent)` two-arg form → set properties first, parent last; `:connect()`/`:wait()` lowercase → `:Connect()`/`:Wait()`; `Body*` movers (`BodyVelocity`/`BodyGyro`/`BodyPosition`/...) → constraints (`LinearVelocity`, `AlignOrientation`, `AlignPosition`); `Humanoid:LoadAnimation` → `Animator:LoadAnimation`; `Part.Velocity`/`RotVelocity` → `AssemblyLinearVelocity`/`AssemblyAngularVelocity`; `SetPrimaryPartCFrame`/`GetPrimaryPartCFrame` → `PivotTo`/`GetPivot`; `Camera.CoordinateFrame` → `Camera.CFrame`; `tick()` → the right time API per [references/luau-language.md](references/luau-language.md#time-apis--one-job-each).
 - Guard external/yielding calls (`DataStore`, `MarketplaceService`, `HttpService`, `TeleportService`) with `pcall` and a retry policy. Never let an unprotected yield crash a player flow.
 - One responsibility per ModuleScript. No circular `require`s — if two modules need each other, extract the shared part into a third module or pass dependencies at init time.
 - Prefer `CollectionService` tags + `Attributes` to bind behavior to Instances — this is the most framework-agnostic wiring mechanism and survives any folder structure.
 - Comments explain *why*, not *what*. Doc comments in English, always as a `--[[ ... ]]` block in desc → params → returns order, with an implementation-agnostic description (see the FUNCTIONS section rules).
+- Deeper language/runtime rules — typing discipline, `task.spawn` vs `task.defer`, deferred engine events, error handling, time APIs, `@native`: [references/luau-language.md](references/luau-language.md).
 
 ## Non-Negotiable Runtime Rules
 
@@ -197,6 +201,7 @@ Full annotated templates (Script, LocalScript, ModuleScript): see [references/te
 4. **Never poll for state — react.** Use events, `:GetPropertyChangedSignal()`, attribute-changed signals, or tag signals instead of `while task.wait() do` checks on a condition that has a signal. Genuinely *periodic* work (autosave interval, throttled AI scans, round timers) is legitimate on a timed loop — that's scheduling, not polling.
 5. **Save data safely.** `UpdateAsync` over `SetAsync`, exponential-backoff retry, save on `PlayerRemoving`, and flush in `game:BindToClose()` and `game.ServerRestartScheduled`.
 6. **Budget the network.** Batch remote traffic; use `UnreliableRemoteEvent` for high-frequency, loss-tolerant data (VFX, positions); for large or frequently-updated state send deltas, not whole states (a small, infrequent snapshot is fine as-is).
+7. **Re-validate after every yield.** Wherever a yield (`task.wait`, a `pcall`ed async call, `WaitForChild`) separates a check from its use, re-check after resuming: the player may have left (`player.Parent` is nil), the instance may be destroyed, the round/session may have changed. Capture values you need *before* the yield; verify liveness *after* it. Scoped: straight-line non-yielding handlers need nothing — this rule triggers only when a yield sits between validation and action.
 
 Details, patterns, and numbers: [references/performance.md](references/performance.md) (CPU, memory, network, instances) and [references/patterns.md](references/patterns.md) (data stores, remotes, cleanup, pooling).
 
@@ -215,4 +220,6 @@ Before finishing any Luau code, verify:
 - [ ] All connections have an owner and a teardown path; no leaked Instances
 - [ ] No allocation or Instance-tree lookup inside hot loops; nothing polled that could be event-driven
 - [ ] All remote handlers validate arguments; all yielding external calls wrapped in `pcall` with retry
+- [ ] Handlers that yield between a check and its use re-validate state after resuming (player still present, instance alive, session unchanged)
+- [ ] Data bound for DataStores keeps a JSON-serializable shape (no mixed keys, NaN, userdata); user-generated text shown to other players goes through server-side filtering
 - [ ] Works regardless of the project's framework — no assumptions about folder layout beyond standard Roblox services

@@ -49,5 +49,6 @@ Rules for writing lightweight, fast, resource-frugal Luau. Ordered by impact.
 
 - **MicroProfiler** (`Ctrl+F6`) for frame-time hotspots; wrap suspect code in `debug.profilebegin/profileend`.
 - **ScriptProfiler** and **Developer Console → Memory** for scripts and leaks (watch `Instances` and `LuaHeap` trend over a long session).
+- **Memory attribution:** `debug.setmemorycategory("SystemName")` at the top of a system's thread tags its subsequent allocations as a distinct category in the Developer Console memory view (`debug.resetmemorycategory()` restores the default) — it turns "LuaHeap is growing" into "the pet system is growing". `gcinfo()` (current heap in KB) logged periodically gives leak trend lines in telemetry.
 - **Studio's Advanced Network Simulation** to test under packet loss/latency before shipping netcode.
 - Structured logging (`LogService` `Info`/`Warn`/`Error` methods where available) with contextual data instead of bare `print` spam.
