@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const https = require('https');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const prompts = require('prompts');
 
 const localSkillDir = path.join(__dirname, '../roblox-best-practices');
@@ -98,33 +98,47 @@ function fetchGithubTags() {
   });
 }
 
+// A git tag/version this installer will accept (e.g. v1.5.1 or 1.5.1).
+// Guards against a malicious --tag value reaching a shell command.
+function isValidTag(tag) {
+  return typeof tag === 'string' && /^v?\d+\.\d+\.\d+$/.test(tag);
+}
+
 // Download a specific tag from GitHub to a temporary directory
 function downloadVersion(tag) {
-  const tempDir = path.join(os.tmpdir(), `roblox_skill_${Math.random().toString(36).substr(2, 9)}`);
+  if (!isValidTag(tag)) {
+    console.error(`\x1b[31m[ERROR] Invalid version tag "${tag}". Expected a form like v1.5.1.\x1b[0m`);
+    process.exit(1);
+  }
+
+  const tempDir = path.join(os.tmpdir(), `roblox_skill_${Math.random().toString(36).slice(2, 11)}`);
   console.log(`Downloading version ${tag} to temporary directory...`);
-  
+
   try {
     let hasGit = false;
     try {
-      execSync('git --version', { stdio: 'ignore' });
+      execFileSync('git', ['--version'], { stdio: 'ignore' });
       hasGit = true;
     } catch (e) {}
 
+    const repoUrl = 'https://github.com/andrian-syh/roblox-best-practices-skill.git';
+
     if (hasGit) {
-      execSync(`git clone --depth 1 --branch ${tag} https://github.com/andrian-syh/roblox-best-practices-skill.git "${tempDir}"`, { stdio: 'ignore' });
+      // Argument array (execFileSync) — no shell, so the tag can never be interpreted as a command.
+      execFileSync('git', ['clone', '--depth', '1', '--branch', tag, repoUrl, tempDir], { stdio: 'ignore' });
     } else {
       fs.mkdirSync(tempDir, { recursive: true });
       const zipUrl = `https://github.com/andrian-syh/roblox-best-practices-skill/archive/refs/tags/${tag}.zip`;
       const zipPath = path.join(tempDir, 'archive.zip');
-      
+
       if (process.platform === 'win32') {
-        execSync(`powershell.exe -Command "Invoke-WebRequest -Uri '${zipUrl}' -OutFile '${zipPath}' -UseBasicParsing"`, { stdio: 'ignore' });
-        execSync(`powershell.exe -Command "Expand-Archive -Path '${zipPath}' -DestinationPath '${tempDir}' -Force"`, { stdio: 'ignore' });
+        execFileSync('powershell.exe', ['-NoProfile', '-Command', `Invoke-WebRequest -Uri '${zipUrl}' -OutFile '${zipPath}' -UseBasicParsing`], { stdio: 'ignore' });
+        execFileSync('powershell.exe', ['-NoProfile', '-Command', `Expand-Archive -Path '${zipPath}' -DestinationPath '${tempDir}' -Force`], { stdio: 'ignore' });
       } else {
-        execSync(`curl -fsSL "${zipUrl}" -o "${zipPath}"`, { stdio: 'ignore' });
-        execSync(`unzip -q "${zipPath}" -d "${tempDir}"`, { stdio: 'ignore' });
+        execFileSync('curl', ['-fsSL', zipUrl, '-o', zipPath], { stdio: 'ignore' });
+        execFileSync('unzip', ['-q', zipPath, '-d', tempDir], { stdio: 'ignore' });
       }
-      
+
       // Move extracted files up
       const tagFolderSuffix = tag.replace(/^v/, '');
       const extractedDir = path.join(tempDir, `roblox-best-practices-skill-${tagFolderSuffix}`);
@@ -132,7 +146,7 @@ function downloadVersion(tag) {
         fs.readdirSync(extractedDir).forEach(file => {
           fs.renameSync(path.join(extractedDir, file), path.join(tempDir, file));
         });
-        fs.rmdirSync(extractedDir);
+        fs.rmSync(extractedDir, { recursive: true, force: true });
       }
     }
     

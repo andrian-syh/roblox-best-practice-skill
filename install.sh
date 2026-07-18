@@ -128,7 +128,7 @@ install_targets() {
   if [ $count -gt 0 ]; then
     echo ""
     echo "Detected existing agent directories in your home directory:"
-    printf "$detected_names\n"
+    printf '%b\n' "$detected_names"
     echo ""
     printf "Do you want to install the skill to these detected agents? (Y/n): "
     read -r CONFIRM
@@ -139,12 +139,12 @@ install_targets() {
         echo "Installing to $HOME/$path/roblox-best-practices..."
         copy_folder "$SRC_SKILL_DIR" "$HOME/$path/roblox-best-practices"
       done
-      printf "$assumed_installed\n"
+      printf '%b\n' "$assumed_installed"
     fi
   else
     echo ""
     echo "No other agent directories detected in your home directory. Skip additional agents."
-    printf "$assumed_installed\n"
+    printf '%b\n' "$assumed_installed"
   fi
 
   echo ""
