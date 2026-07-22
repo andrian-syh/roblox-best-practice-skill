@@ -32,3 +32,5 @@ When reviewing code (rather than writing it), findings must survive this filter 
 4. **Verify APIs against the target environment** before flagging them as wrong or nonexistent (SKILL.md → Environment & Scale) — never from memory alone.
 
 These four steps are what keep a review objective: they filter out bias toward "code that looks different from how I'd write it".
+
+Once a finding passes all four steps, assign it a severity — **Blocker**, **Correctness**, or **Advisory** — using the taxonomy and the full "what NOT to flag" catalog in [false-positives.md](false-positives.md). The gate decides *whether* a finding is real; the severity decides *how bad* it is. Advisory items are proposed, never reported as violations, and never silently rewritten.

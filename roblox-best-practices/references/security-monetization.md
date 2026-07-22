@@ -9,6 +9,7 @@ Exploiters can: fire any RemoteEvent/RemoteFunction with any arguments at any ra
 Consequences:
 - Never put secrets (API keys, admin lists used for enforcement, loot tables you don't want mined) in ReplicatedStorage or any client-visible location. Enforcement data lives server-side; ReplicatedStorage holds only what clients legitimately need.
 - Client-side anti-cheat is a speed bump, not a wall — it may exist for honest-player UX, but every *decision* is server-side.
+- Validate **client-reachable inputs**: RemoteEvents, RemoteFunctions, UnreliableRemoteEvents, and teleport data. Server-side `BindableEvent`/`BindableFunction` and internal module calls are **not** a trust boundary (an exploiter cannot reach them) — don't apply client-style validation there ([false-positives.md](false-positives.md#security--validation--what-is-not-a-trust-boundary)).
 - Never execute strings or dynamic requires from client input; `loadstring`/`getfenv`/`setfenv` stay banned.
 
 ## Server-side validation layers
@@ -51,6 +52,18 @@ Character physics is client-owned; validate *outcomes*, not inputs:
 - Account for legitimate causes before punishing: server teleports, vehicle exits, knockback, streaming pauses. Maintain an "expected displacement" allowlist window after such events.
 - Hit/interaction range: re-verify distance server-side at execution time, with a lag allowance (~10–15 studs beyond nominal range, tuned per game).
 - Don't build honeypots that punish automatically (invisible parts that kick on touch) without long observation first — false positives destroy trust.
+
+## Server Authority (engine-level)
+
+Roblox offers an **engine-level server-authoritative mode** that moves physics simulation and movement validation onto the server, closing the client-owned-movement gap that the manual sanity checks above only *mitigate*. When a project opts in:
+
+- **Input flows through the Input Action System.** Clients send `InputAction` state, which the server replays during client-side resimulation. Route every input that affects the core simulation through InputActions, and still sanity-check it before acting — server-authoritative transport is not the same as trusted intent.
+- **Do not drive core simulation from `UserInputService.InputBegan`** in this mode; reserve raw input for UI and purely cosmetic client effects.
+- **Attribute state has a replication budget:** first 64 attributes on the instance, name ≤ 50 characters, string value ≤ 50 characters ([patterns.md](patterns.md#behavior-binding-works-with-any-framework)).
+- **`Player:GetCameraState()`** synchronizes camera state between client and server where the camera is relevant to authority.
+- It is opt-in and still evolving — verify availability and behavior in the target place ([api-currency.md](api-currency.md)) before designing around it. Where it is not used, the manual validation layers above stay the baseline.
+
+Server Authority *strengthens* Non-Negotiable #1; it does not replace validation. Even under engine authority, remote handlers and input consumers still validate type, range, ownership, and rate.
 
 ## Purchases
 

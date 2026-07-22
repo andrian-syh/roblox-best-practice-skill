@@ -31,6 +31,7 @@ Every rule in this skill applies to every genre — but each genre has a **domin
 - Client predicts (muzzle flash, tracer, hit-marker immediately), server confirms (damage, kill). Reconcile visibly wrong predictions quietly.
 - `UnreliableRemoteEvent` for tracers/VFX/footsteps; reliable remotes for damage events.
 - Anti-cheat sanity checks ([security-monetization.md](security-monetization.md)): speed/teleport deltas, fire-rate caps, ammo accounting — all server-side.
+- Where the project uses engine **Server Authority**, movement validation moves onto the server and inputs flow through the Input Action System ([security-monetization.md](security-monetization.md#server-authority-engine-level)) — prefer it over hand-rolled movement checks when it is available.
 - Character physics is client-owned by design; never trust reported positions for hit *validation*, only for display.
 - Fixed-rate combat logic (`RunService` Heartbeat with accumulated dt; `BindToSimulation` only for synchronized physics/prediction code under `Workspace.UseFixedSimulation` — see [performance.md](performance.md)) so higher-FPS clients gain no advantage.
 

@@ -230,4 +230,6 @@ updateCoinDisplay()
 - `table.pack`/`table.unpack` in `withRetry` is acceptable here because retries are rare-path; never do this in a hot loop.
 - The LocalScript reads state via Attributes rather than a RemoteEvent — prefer attribute/tag replication for simple state; reserve remotes for actions.
 - Every declared Service/Module/Object/constant in these templates is used — copy that discipline: declare only what the script actually needs.
-- Bare `WaitForChild` is fine for containers that always replicate (ReplicatedStorage, PlayerGui). For `workspace` descendants under StreamingEnabled, use a timeout or a CollectionService tag signal instead ([performance.md](performance.md)).
+- Bare `WaitForChild` is fine for containers that always replicate (ReplicatedStorage, PlayerGui). For `workspace` descendants under StreamingEnabled, use a timeout or a CollectionService tag signal instead ([patterns.md](patterns.md#streaming-streamingenabled)).
+- The doc comments here model the UDD rules: one terse technical line, contract-level, English, no em dashes or emoji (SKILL.md → FUNCTIONS). Copy that brevity; never pad a file with multi-line doc blocks.
+- The `--!strict` header shown is illustrative. Per SKILL.md it is opt-in — match the project's strictness and never add it unbidden.

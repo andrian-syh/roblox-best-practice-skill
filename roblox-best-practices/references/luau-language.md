@@ -8,7 +8,7 @@ Language-level and scheduler-level rules that go deeper than SKILL.md's Language
 - **Share types through a dedicated types module:** `export type Loadout = { ... }` in one ModuleScript, consumed as `Types.Loadout` on both server and client — one definition, zero drift.
 - **The cast operator `::` silences the checker — treat every cast as a claim you must have already proven.** Cast to *narrow* after a runtime check (`value :: string` after `typeof(value) == "string"`), never to force incompatible shapes through. An unchecked cast is a suppressed error, not a fix.
 - Generics (`local function first<T>(list: {T}): T?`) and type packs (`T...`) beat `any` in reusable utilities.
-- Newer type-solver features (`keyof`, user-defined type functions) require the new type solver — verify it is enabled in the target environment before using them; don't flag their absence in projects on the old solver.
+- **User-defined type functions** run at analysis time and can build types programmatically: a `type function` body uses the `types` library (`types.unionof`, `types.singleton`, `types.newfunction`) and can inspect its inputs (`ty:is("table")`, `ty:properties()`). Built-ins such as `keyof` and `issubtypeof` sit alongside them. All of these require the **new type solver** — verify it is enabled in the target place before use ([api-currency.md](api-currency.md)), and never flag their absence in old-solver projects ([false-positives.md](false-positives.md#typing--do-not-flag-the-project-for-tools-it-does-not-use)).
 
 ## Modern idioms
 
@@ -16,6 +16,14 @@ Language-level and scheduler-level rules that go deeper than SKILL.md's Language
 - **String interpolation:** `` `Hello {player.Name}` `` over concatenation chains.
 - `continue`, compound assignment (`+=`, `-=`, `*=`, `..=`), floor division (`//`), and `if x then a else b` expressions are standard Luau — use them where they read better.
 - **`table.freeze` constant tables.** Module-level config/constant tables should be frozen at declaration: writes then error at the mutation site instead of silently corrupting shared state. Freezing is *shallow* (nested tables need their own freeze) and checkable with `table.isfrozen`. Don't freeze tables that legitimately mutate.
+
+## Standard library — recent additions
+
+Confirmed available per [api-currency.md](api-currency.md) — use them, and don't treat them as unknown.
+
+- **`vector` library** — a native, SIMD-backed vector value type: `vector.create(x, y, z)` (3 or 4 components), component access (`.x`/`.y`/`.z`), the `vector.zero`/`vector.one` constants, first-class operator support, and `vector.magnitude`/`normalize`/`dot`/`cross`/`angle`. Prefer it for heavy vector math to cut GC pressure ([performance.md](performance.md#cpu)). It is distinct from the engine `Vector3` datatype; both coexist in Roblox.
+- **`buffer` library** — fixed-size mutable binary blocks for serialization and large numeric arrays ([performance.md](performance.md#memory)); recent engine versions add **`buffer.readbits`/`buffer.writebits`** for bit-level packing.
+- **`math` additions** — `math.map` (remap a value between two ranges), `math.lerp`, and the classifiers `math.isnan`/`math.isinf`/`math.isfinite` (clearer and cheaper than hand-rolled checks; pair `isnan`/`isinf` with the DataStore serialization guards in [patterns.md](patterns.md#data-persistence)).
 
 ## Scheduling: the task library
 

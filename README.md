@@ -103,6 +103,8 @@ The skill routes coding logic through modular reference sheets depending on the 
 - **Performance**: [references/performance.md](references/performance.md) - Loop optimizations, garbage collection, and resource-frugal memory practices.
 - **Security & Monetization**: [references/security-monetization.md](references/security-monetization.md) - Server authority, remote validation depth, and handling purchases.
 - **Genres**: [references/genres.md](references/genres.md) - Specific advice based on the game type (Simulator, Obby, FPS, horror, RPG, etc.).
+- **False-Positive Guardrails**: [references/false-positives.md](references/false-positives.md) - Severity taxonomy and the "what NOT to flag" catalog for objective code review.
+- **API Currency**: [references/api-currency.md](references/api-currency.md) - Dated baseline of confirmed engine/Luau APIs for the verify-first rule.
 
 ### 4. Basic Script Layout
 For standard new files, scripts are divided into distinct sections:

@@ -4,7 +4,7 @@ Rules for writing lightweight, fast, resource-frugal Luau. Ordered by impact.
 
 ## CPU
 
-- **Hoist out of hot loops.** Anything inside `RunService` callbacks, `while` loops, or per-entity iteration must not: create tables/closures, concatenate strings, call `Instance:FindFirstChild`/`WaitForChild`/`GetChildren`, or index deep Instance paths. Resolve references once in VARIABLES or at connection time.
+- **Hoist out of hot loops.** Anything inside `RunService` callbacks, `while` loops, or per-entity iteration must not: create tables/closures, concatenate strings, call `Instance:FindFirstChild`/`WaitForChild`/`GetChildren`, or index deep Instance paths. Resolve references once in VARIABLES or at connection time. What counts as a *hot* path, and which allocations are genuinely irreducible, is defined in [false-positives.md](false-positives.md#performance--hot-loops--define-hot-first) — hoist only what can be hoisted, and reuse with `table.clear` when a per-iteration table is unavoidable.
 - **Cache repeated lookups.** `local floor = math.floor` matters only in extreme hot paths; caching *Instance* lookups and *attribute reads* matters everywhere.
 - **Prefer `Heartbeat` over `RenderStepped`.** `PreRender`/`RenderStepped` blocks the frame — client-only, camera/visual work only. Gameplay logic belongs on `Heartbeat`. (Naming note: `Heartbeat` = `PostSimulation`, `RenderStepped` = `PreRender`, `Stepped` = `PreSimulation` — either name is acceptable; never flag one as wrong.)
 - **`RunService:BindToSimulation(callback, frequency, priority)`** exists for *fixed-rate physics/prediction code only*: it requires `Workspace.UseFixedSimulation`, `frequency` is an `Enum.StepFrequency` (default 30 Hz), and the callback errors if it touches unsynchronized properties/methods. Do **not** recommend it for general gameplay logic — for that, accumulate `deltaTime` on `Heartbeat`.
@@ -12,7 +12,7 @@ Rules for writing lightweight, fast, resource-frugal Luau. Ordered by impact.
 - **Use the right primitives:** `vector`/`Vector3` math over per-component arithmetic; `buffer` for binary data and large numeric arrays; `table.create(n)` when the final size is known; `table.clear()` to reuse tables instead of reallocating.
 - **String building:** collect into a table and `table.concat`, or use interpolation backticks; never `..` in a loop.
 - **Native codegen:** for genuinely compute-heavy ModuleScripts (procedural generation, pathfinding math), add `--!native`. Don't scatter it everywhere — it costs memory.
-- **Parallel Luau:** only for embarrassingly-parallel heavy work (raycast batches, terrain edits) via Actors. Don't parallelize chatty logic; cross-VM communication overhead outweighs gains.
+- **Parallel Luau:** only for embarrassingly-parallel heavy work (raycast batches, terrain edits, procedural generation) via Actors. Each Actor runs its scripts in its own VM; call `task.desynchronize()` to enter the parallel phase and `task.synchronize()` to return before touching the DataModel (most write APIs are unsafe in parallel and error if called there). Share data across Actors with **`SharedTable`** (a thread-safe table visible to every VM) rather than passing Luau tables directly. Don't parallelize chatty logic — cross-VM synchronization overhead outweighs the gain; parallelize only when per-item compute dwarfs the coordination cost.
 
 ## Memory
 
@@ -34,7 +34,7 @@ Rules for writing lightweight, fast, resource-frugal Luau. Ordered by impact.
   - `UnreliableRemoteEvent` for high-frequency loss-tolerant data (cosmetic positions, VFX triggers, voice-adjacent pings). Reliable remotes for anything gameplay-critical.
   - `FireClient` targeted lists instead of `FireAllClients` when only some players care.
 - **Prefer replication you get for free:** Attributes, tags, and property replication reach clients without custom remotes and are automatically streamed. Use remotes for *actions*, attributes for *state*.
-- **StreamingEnabled awareness:** never assume workspace descendants exist on the client. Use `WaitForChild` with timeouts, `CollectionService` tag signals (`GetInstanceAddedSignal`), or design around persistent models. Mesh streaming is default on modern engine versions — plan LoD accordingly.
+- **StreamingEnabled awareness:** never assume workspace descendants exist on the client, and plan LoD around mesh streaming (default on modern engine versions). The full streaming pattern — `WaitForChild` timeouts, tag signals, `Model.ModelStreamingMode`, `RequestStreamAroundAsync` — lives in [patterns.md](patterns.md#streaming-streamingenabled).
 - **Payload size:** numbers are cheap, strings and nested tables are not. For bulk data use `buffer` serialization.
 
 ## Instances & Rendering

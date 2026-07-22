@@ -19,11 +19,13 @@ Load only what the situation needs:
 | Existing codebase with its own conventions (Adaptive mode) | [references/adaptive-mode.md](references/adaptive-mode.md) |
 | Project uses community libraries (ProfileStore, Packet, Trove, Knit, Fusion, ...) | [references/community-libraries.md](references/community-libraries.md) |
 | Hot loops, memory, network traffic, rendering, profiling | [references/performance.md](references/performance.md) |
-| Data stores, remotes, cleanup, pooling, input, character lifecycle, cross-server, anti-patterns | [references/patterns.md](references/patterns.md) |
-| Purchases, anti-exploit, remote validation depth, text filtering, policy compliance | [references/security-monetization.md](references/security-monetization.md) |
+| Data stores (+ version history), remotes, cleanup, pooling, input, character lifecycle, streaming, cross-server, anti-patterns | [references/patterns.md](references/patterns.md) |
+| Purchases, anti-exploit, Server Authority, remote validation depth, text filtering, policy compliance | [references/security-monetization.md](references/security-monetization.md) |
 | UI/UX, cross-platform, testing, debugging, telemetry | [references/ui-ux-testing.md](references/ui-ux-testing.md) |
-| Typing depth, task.spawn vs task.defer, deferred events, error handling, time APIs, native codegen | [references/luau-language.md](references/luau-language.md) |
+| Typing depth, standard-library additions (vector/buffer/math), task.spawn vs task.defer, deferred events, error handling, time APIs, native codegen | [references/luau-language.md](references/luau-language.md) |
 | Verifying that a change works (playtest workflow, test injection, command-bar VM pitfall) or verifying a review finding | [references/verification.md](references/verification.md) |
+| Reviewing code — deciding whether a finding is real and how severe, and what NOT to flag | [references/false-positives.md](references/false-positives.md) |
+| Whether a newer engine/Luau API is confirmed available before relying on it or flagging it as missing | [references/api-currency.md](references/api-currency.md) |
 | Genre is known (simulator, FPS, obby, RPG, racing, horror, social, tower defense, battlegrounds) | [references/genres.md](references/genres.md) |
 
 ## User Authority
@@ -87,12 +89,12 @@ Also determine, once, whether the project uses community libraries that replace 
 
 ### Review/refactor mode
 
-When asked to *review or tidy existing code* (rather than write new code):
+When asked to *review or tidy existing code* (rather than write new code), give every finding exactly one severity — **Blocker** (security, data loss, or a guaranteed leak), **Correctness** (a real bug with a concrete failure scenario), or **Advisory** (style, layout, or micro-optimization). Before reporting anything, run it through [references/false-positives.md](references/false-positives.md): the "what NOT to flag" catalog, the severity taxonomy, and the four-step confidence gate.
 
-- Violations of Non-Negotiable Runtime Rules and deprecated APIs → report as findings (and fix if asked). Apply the rules *as scoped* — the exceptions written into them (periodic loops, cold-path allocations, small state snapshots) are not violations.
-- Section-layout/naming deviations and missing doc comments on trivial private functions → *propose* restructuring as minor suggestions, don't silently rewrite and don't report them as violations; the user decides.
+- **Blocker / Correctness** — violations of Non-Negotiable Runtime Rules and misused deprecated APIs → report as findings (and fix if asked). Apply the rules *as scoped*: the exceptions written into them (periodic loops, cold-path allocations, small state snapshots) are not violations, and discouraged-but-functional APIs are not deprecated ones.
+- **Advisory** — section-layout/naming deviations, module-require ordering, and missing doc comments on trivial private functions → *propose* as suggestions; never report as violations, never silently rewrite; the user decides. The doc-comment mandate is an authoring rule, not a review cudgel.
 - Never reformat code unrelated to the request; consistency within the file beats consistency with this skill.
-- Before flagging an API as wrong/nonexistent, verify against the target environment (see Environment & Scale) — never flag from memory alone.
+- Before flagging an API as wrong/nonexistent, verify against the target environment (the [references/api-currency.md](references/api-currency.md) baseline; see Environment & Scale) — never flag from memory alone.
 - **Trace before flagging.** Follow the full flow across both sides of paired logic (writer/reader, serializer/deserializer, fire/handler) before reporting a bug — an asymmetry between paired sites is only a defect if tracing both sides shows a divergent outcome; it may deliberately compensate for the other side. Unusual-looking designs (state created before data exists, self-healing caches) may be intentional — check usage sites first. A finding needs a concrete failure scenario (inputs → wrong outcome); "could maybe fail" is not a finding. Full procedure: [references/verification.md](references/verification.md#review-verification-discipline-trace-before-flag).
 
 ## Environment & Scale
@@ -141,9 +143,10 @@ Subsections in this fixed order (omit any that are empty):
 
 - **ModuleScripts** split functions into `-- | Private | --` (used only inside this script, `local function`) and `-- | Public | --` (exposed on the returned table). Private comes first.
 - **Scripts/LocalScripts** usually skip the Private/Public split — just list functions under the section header (use level-2 headers to group by topic if the script is large).
-- **Every function gets a doc comment**, ALWAYS wrapped in a `--[[ ... ]]` block placed directly above the function — even when the description is a single line. Structure, in this fixed order: **description → params → returns**.
-  - **Description** — technical, concise, clear English. It must describe the function's *general purpose/contract*, **NOT** its current implementation: never mention/discuss the specific features, APIs, algorithms, or code paths inside the body. Written this way, the description stays valid and relevant when the function's contents change.
-  - **`@param` / `@return`** — include only when they add information beyond what the signature already shows (non-obvious meaning, units, constraints, nil-behavior); omit them entirely when obvious.
+- **Every function gets a doc comment**, ALWAYS wrapped in a `--[[ ... ]]` block placed directly above the function — even when the description is a single line. Structure, in this fixed order: **description → params → returns**. Keep the whole block tight: doc comments document, they must not inflate the file's line count. If a function needs paragraphs to explain, that is a signal to simplify the function, not to write an essay.
+  - **Description** — one concise, technical sentence in clear English, **≤ ~100 characters** (absolute ceiling ~50 words for the rare two-clause case; aim far shorter). Capture the function's *general purpose/contract* — the common, high-level points a reader needs — **NOT** its current implementation: never mention the specific features, APIs, algorithms, or code paths inside the body, so the description survives changes to the body.
+  - **Tone** — write like an engineer, not a bot. No stiff, robotic, or "AI-slop" phrasing, and **no em dashes and no emoji** inside doc comments. English only, so developers of any origin can read it.
+  - **`@param` / `@return`** — just as terse (a few words each). Include only when they add information beyond what the signature already shows (non-obvious meaning, units, constraints, nil-behavior); omit them entirely when obvious.
 
 ```lua
 --[[
@@ -183,14 +186,16 @@ Full annotated templates (Script, LocalScript, ModuleScript): see [references/te
 
 ## Language & Style Rules
 
-- Start every script with `--!strict` (or `--!nonstrict` only when strict is impractical). Type-annotate public function signatures, Configuration constants, and State tables.
+- **Type safety is opt-in.** Do not add `--!strict` (or raise a file's strictness) on your own initiative — it requires an explicit request from the user. When a file or the surrounding project already declares a strictness level, match it for consistency, but never introduce or upgrade strictness unbidden; forcing strict can surface false type errors against loosely-typed engine APIs. Where strict is in use, type-annotate public function signatures, Configuration constants, and State tables.
 - **Naming:** `PascalCase` for services and required module tables; `camelCase` for local variables, functions, and Instance references (`purchaseRemote`, `coinLabel`); `UPPER_SNAKE_CASE` for Configuration constants. Module public methods `PascalCase` (`Inventory.AddItem`), private functions `camelCase`.
 - Always `game:GetService()` — never `game.Workspace`-style direct indexing (exception: `workspace` global is fine).
-- **Never use deprecated APIs:** `wait()`/`spawn()`/`delay()` → `task.wait()`/`task.spawn()`/`task.delay()`; `Instance.new(class, parent)` two-arg form → set properties first, parent last; `:connect()`/`:wait()` lowercase → `:Connect()`/`:Wait()`; `Body*` movers (`BodyVelocity`/`BodyGyro`/`BodyPosition`/...) → constraints (`LinearVelocity`, `AlignOrientation`, `AlignPosition`); `Humanoid:LoadAnimation` → `Animator:LoadAnimation`; `Part.Velocity`/`RotVelocity` → `AssemblyLinearVelocity`/`AssemblyAngularVelocity`; `SetPrimaryPartCFrame`/`GetPrimaryPartCFrame` → `PivotTo`/`GetPivot`; `Camera.CoordinateFrame` → `Camera.CFrame`; `tick()` → the right time API per [references/luau-language.md](references/luau-language.md#time-apis--one-job-each).
+- **Never use deprecated APIs:** `wait()`/`spawn()`/`delay()` → `task.wait()`/`task.spawn()`/`task.delay()`; `:connect()`/`:wait()` lowercase → `:Connect()`/`:Wait()`; `Body*` movers (`BodyVelocity`/`BodyGyro`/`BodyPosition`/...) → constraints (`LinearVelocity`, `AlignOrientation`, `AlignPosition`); `Humanoid:LoadAnimation` → `Animator:LoadAnimation`; `Part.Velocity`/`RotVelocity` → `AssemblyLinearVelocity`/`AssemblyAngularVelocity`; `SetPrimaryPartCFrame`/`GetPrimaryPartCFrame` → `PivotTo`/`GetPivot`; `Camera.CoordinateFrame` → `Camera.CFrame`; `Player:GetRankInGroupAsync`/`GetRoleInGroupAsync` → `GroupService:GetRolesInGroupAsync`; `tick()` → the right time API per [references/luau-language.md](references/luau-language.md#time-apis--one-job-each).
+- **Deprecated is not the same as discouraged.** Setting `Instance.new`'s second `parent` argument (create → set properties → parent last is a *performance* preference), or `FireAllClients` where a targeted list would do, are Advisory choices, not deprecated APIs — don't report them as violations. Full split: [references/false-positives.md](references/false-positives.md#deprecated-vs-discouraged--do-not-conflate-them).
 - Guard external/yielding calls (`DataStore`, `MarketplaceService`, `HttpService`, `TeleportService`) with `pcall` and a retry policy. Never let an unprotected yield crash a player flow.
 - One responsibility per ModuleScript. No circular `require`s — if two modules need each other, extract the shared part into a third module or pass dependencies at init time.
 - Prefer `CollectionService` tags + `Attributes` to bind behavior to Instances — this is the most framework-agnostic wiring mechanism and survives any folder structure.
-- Comments explain *why*, not *what*. Doc comments in English, always as a `--[[ ... ]]` block in desc → params → returns order, with an implementation-agnostic description (see the FUNCTIONS section rules).
+- **Stay framework-agnostic by construction.** Core logic relies only on standard Roblox services and engine features; a community library's way of doing something is an overlay ([references/community-libraries.md](references/community-libraries.md)), never the baseline. Never assume a folder layout or framework beyond standard services — bind by tags/attributes, discover by service, and let the community-library check (not a hard-coded path) decide which idioms apply.
+- Comments explain *why*, not *what*. Doc comments are terse, technical English (≤ ~100-char descriptions, no em dashes or emoji), always a `--[[ ... ]]` block in desc → params → returns order, with an implementation-agnostic description (see the FUNCTIONS section rules).
 - Deeper language/runtime rules — typing discipline, `task.spawn` vs `task.defer`, deferred engine events, error handling, time APIs, `@native`: [references/luau-language.md](references/luau-language.md).
 
 ## Non-Negotiable Runtime Rules
@@ -203,7 +208,7 @@ Full annotated templates (Script, LocalScript, ModuleScript): see [references/te
 6. **Budget the network.** Batch remote traffic; use `UnreliableRemoteEvent` for high-frequency, loss-tolerant data (VFX, positions); for large or frequently-updated state send deltas, not whole states (a small, infrequent snapshot is fine as-is).
 7. **Re-validate after every yield.** Wherever a yield (`task.wait`, a `pcall`ed async call, `WaitForChild`) separates a check from its use, re-check after resuming: the player may have left (`player.Parent` is nil), the instance may be destroyed, the round/session may have changed. Capture values you need *before* the yield; verify liveness *after* it. Scoped: straight-line non-yielding handlers need nothing — this rule triggers only when a yield sits between validation and action.
 
-Details, patterns, and numbers: [references/performance.md](references/performance.md) (CPU, memory, network, instances) and [references/patterns.md](references/patterns.md) (data stores, remotes, cleanup, pooling).
+Details, patterns, and numbers: [references/performance.md](references/performance.md) (CPU, memory, network, instances) and [references/patterns.md](references/patterns.md) (data stores, remotes, cleanup, pooling). Before flagging a violation of any of these in review, check the scoped exceptions in [references/false-positives.md](references/false-positives.md) — each rule has shapes that only look like violations.
 
 ## Review Checklist
 
@@ -213,10 +218,10 @@ Before finishing any Luau code, verify:
 - [ ] Mode determined (default vs adaptive); in adaptive mode, the convention was confirmed by the user before coding (or reported, in Autonomous)
 - [ ] Community libraries identified (asked or detected); overlapping patterns deferred to them
 - [ ] Three top-level sections present and correctly ordered (except exempt pure data/type modules); correct header syntax at each level (or the confirmed adapted equivalent); ceremony scaled to script size, no empty headers
-- [ ] In review mode: non-negotiables reported as findings, stylistic changes proposed not forced, unrelated code untouched
+- [ ] In review mode: each finding triaged as Blocker/Correctness/Advisory and run through the false-positives gate; Advisory items proposed not forced; unrelated code untouched
 - [ ] Services/Modules/Objects/Configuration/State ordered per spec; module requires ordered SSS → SS → RS → Workspace → script-relative (only reachable locations count)
-- [ ] Every function has a `--[[ ... ]]` block doc comment in desc → params → returns order; the description is general/contract-level (no mention of the body's specific features or code) so it survives implementation changes
-- [ ] `--!strict` (or justified `--!nonstrict`); no deprecated APIs
+- [ ] Every function has a `--[[ ... ]]` block doc comment in desc → params → returns order; the description is terse (≤ ~100 chars), technical English with no em dashes or emoji, and general/contract-level (no mention of the body's specifics) so it survives implementation changes
+- [ ] `--!strict` present only where the user asked or the project already uses it (never added unbidden); no deprecated APIs (discouraged-but-functional APIs are not violations)
 - [ ] All connections have an owner and a teardown path; no leaked Instances
 - [ ] No allocation or Instance-tree lookup inside hot loops; nothing polled that could be event-driven
 - [ ] All remote handlers validate arguments; all yielding external calls wrapped in `pcall` with retry

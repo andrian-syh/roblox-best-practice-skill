@@ -10,6 +10,7 @@ Reusable patterns that work in any project structure. Each fits the VARIABLES/FU
 - **Retry with exponential backoff** around every DataStore call (`pcall` + `2^attempt` delay, 3–5 attempts).
 - **Save triggers:** `PlayerRemoving` (always), periodic autosave (2–5 min), `game:BindToClose` (iterate remaining players synchronously — you get 30 s), and `game.ServerRestartScheduled` where available (fires before scheduled restarts; flush early).
 - **Versioned store names** (`PlayerData_v2`) + a migration function on load, so schema changes never corrupt old data.
+- **Version history is a built-in backup.** DataStore retains prior versions of each key: `DataStore:ListVersionsAsync` enumerates them and `DataStore:GetVersionAsync` reads a specific one, so a corruption or dupe report can be investigated and rolled back without a bespoke backup system. `ListKeysAsync` enumerates keys for migration/audit sweeps; the `DataStoreKeyInfo` returned alongside `GetAsync`/`UpdateAsync` carries version ids and metadata. These are diagnostic/read tools — the live save path stays `UpdateAsync`.
 - **Session cache:** load once on join into a server-side table; all gameplay reads/writes hit the cache; DataStore only on save triggers. Never read DataStores during gameplay.
 - **Session locking** (write a lock key with server id + timestamp, or use MemoryStore) if item duplication via server-hopping matters for your economy.
 - **Store only serializable shapes.** DataStore values must survive JSON encoding: strings valid UTF-8; table keys either a contiguous `1..n` array or all strings (mixed or sparse keys fail); no `NaN`/`±inf`; no Instances or userdata (`Vector3`, `CFrame`, `Color3`, EnumItems — convert to primitive tables/numbers on save, rebuild on load); no cycles; value ≤ 4 MB, key name ≤ 50 characters. A violation makes the **save call itself fail** — so keep session data in a serializable shape from the start rather than sanitizing at save time, and make the retry wrapper log the error so these failures are never silent.
@@ -32,6 +33,7 @@ local function onEquipRequest(player: Player, itemId: unknown)
 end
 ```
 
+- A handler that type-checks and early-returns on bad input is already **complete**: the skeleton is the maximum shape, not a mandatory checklist. A harmless, idempotent action needs no rate/ownership layer, and silent rejection is correct (an error reply aids fuzzing). Don't report a lean handler as missing layers — see [false-positives.md](false-positives.md#security--validation--a-handler-can-already-be-complete).
 - Prefer `RemoteEvent` + a response event over `RemoteFunction` server→client (a client that never returns hangs your thread). Client→server `RemoteFunction` is acceptable with a server-side timeout mindset.
 - Namespace remotes in one folder (`ReplicatedStorage/Remotes`); create them in one server script or build step so clients can `WaitForChild` deterministically.
 - State that clients merely *display* → replicate via Attributes on the player/character instead of remotes.
@@ -54,7 +56,7 @@ CollectionService:GetInstanceAddedSignal("Lava"):Connect(bindLava)
 
 - Pair with `GetInstanceRemovedSignal` to clean up per-instance state (mandatory with StreamingEnabled — instances come and go).
 - Per-instance tuning via **Attributes** (`part:GetAttribute("Damage")`), not name-parsing or config child-values.
-- **Attribute limits:** attributes support a fixed set of value types (booleans, numbers, strings, and Roblox data types like `Vector3`/`Color3`/`UDim2`) — **no tables, no Instance references**. For structured per-instance data, keep a module-side registry keyed by the instance (with a removal path per the cleanup rules); don't make JSON-encoded attribute blobs a habit.
+- **Attribute limits:** attributes support a fixed set of value types (booleans, numbers, strings, and Roblox data types like `Vector3`/`Color3`/`UDim2`) — **no tables, no Instance references**. For structured per-instance data, keep a module-side registry keyed by the instance (with a removal path per the cleanup rules); don't make JSON-encoded attribute blobs a habit. Under **Server Authority**, an attribute only replicates if it is among the **first 64 attributes** on its instance, its **name is ≤ 50 characters**, and (for string values) the **value is ≤ 50 characters** — budget attribute-based state sync within that window.
 
 ## Lifecycle & Cleanup
 
@@ -93,6 +95,16 @@ Characters respawn; players persist. Confusing the two lifetimes is a standing l
 - Inside `CharacterAdded`, descendants may not have arrived yet — `character:WaitForChild("Humanoid")` (or `HumanoidRootPart`) rather than direct indexing; `Humanoid.Died` for death logic.
 - **Per-life state** (connections, temporary buffs, hitbox registrations, active tweens on the character) is keyed by the *character* and cleared in `CharacterRemoving` or the character model's `Destroying` — respawn does not clean your module tables for you. **Per-player state** persists across respawns and clears in `PlayerRemoving`.
 - Connections made *on the character's own instances* die with the character; connections held elsewhere that merely *reference* the character do not — those are the ones that need the explicit teardown.
+
+## Streaming (StreamingEnabled)
+
+The single home for streaming rules; other references point here. With StreamingEnabled, workspace descendants replicate to a client only near the player and can arrive late or leave mid-session. Nothing outside the persistent set is guaranteed to exist client-side.
+
+- **Never assume a workspace descendant exists on the client.** Reach it through `WaitForChild(name, timeout)` (with a timeout, so a never-streamed instance fails gracefully) or, better, a `CollectionService` tag signal (`GetInstanceAddedSignal`/`GetInstanceRemovedSignal`) so behavior binds as instances stream in and unbinds as they leave. Bare, timeout-less `WaitForChild` stays correct for always-replicated containers (`ReplicatedStorage`, `PlayerGui`) — see [false-positives.md](false-positives.md#streaming--bare-waitforchild-is-often-correct).
+- **Pair every per-instance setup with a removal path.** Streamed-out instances fire `GetInstanceRemovedSignal`/`Destroying`; clear their per-instance state there, exactly as with player and character lifetimes.
+- **Control what streams via `Model.ModelStreamingMode`** — `Atomic` (the model streams in/out as one unit), `Nonatomic`, `Default`, and `Persistent`/`PersistentPerPlayer` (never streamed out). Keep gameplay-critical anchors persistent; let cosmetic or distant content stream.
+- **`Player:RequestStreamAroundAsync(position)`** hints the engine to stream a region in before a teleport or camera cut, reducing pop-in. It is a hint, not a guarantee — still design for missing instances.
+- Server scripts see the whole DataModel regardless of streaming; these rules govern **client** code and replication timing. Verify with a multi-client session, not single-Play ([verification.md](verification.md)).
 
 ## Cross-Server Communication
 
